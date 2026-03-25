@@ -119,9 +119,9 @@ const LoginPage = () => {
                 <SelectValue placeholder="Select your role" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
+                <SelectItem value="student">🎓 Student</SelectItem>
                 <SelectItem value="teacher">🧑‍🏫 Teacher</SelectItem>
                 <SelectItem value="admin">🛡️ Admin</SelectItem>
-                <SelectItem value="student">🎓 Student</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -17,6 +17,7 @@ import { signup, login } from "@/lib/api";
 
 const CreateAccountPage = () => {
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [department, setDepartment] = useState("");
   const [rollNo, setRollNo] = useState("");
   const [password, setPassword] = useState("");
@@ -28,10 +29,10 @@ const CreateAccountPage = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !department || !rollNo || !password || !role) {
+    if (!name || !username || !department || !rollNo || !password || !role) {
       toast({
         title: "Missing fields",
-        description: "Please fill in all fields and select a role.",
+        description: "Please fill in all fields (Name, Username, Department, Roll No, Password) and select a role.",
         variant: "destructive",
       });
       return;
@@ -39,7 +40,7 @@ const CreateAccountPage = () => {
 
     setLoading(true);
     try {
-      const email = `${rollNo.toLowerCase().replace(/\s+/g, "")}@lipika.local`;
+      const email = `${username.toLowerCase().replace(/\s+/g, "")}@lipika.local`;
       await signup({
         name,
         email,
@@ -104,13 +105,13 @@ const CreateAccountPage = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="department" className="text-sm font-medium text-foreground">Department</Label>
-            <Input id="department" placeholder="Enter your department" value={department} onChange={(e) => setDepartment(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-0 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary" />
+            <Label htmlFor="username" className="text-sm font-medium text-foreground">Username</Label>
+            <Input id="username" placeholder="Enter your username" value={username} onChange={(e) => setUsername(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-0 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="rollno" className="text-sm font-medium text-foreground">Username / Roll No</Label>
-            <Input id="rollno" placeholder="Enter the Roll No" value={rollNo} onChange={(e) => setRollNo(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-0 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary" />
+            <Label htmlFor="rollno" className="text-sm font-medium text-foreground">Roll No</Label>
+            <Input id="rollno" placeholder="Enter your Roll No" value={rollNo} onChange={(e) => setRollNo(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-0 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary" />
           </div>
 
           <div className="space-y-2">
@@ -121,6 +122,11 @@ const CreateAccountPage = () => {
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="department" className="text-sm font-medium text-foreground">Department</Label>
+            <Input id="department" placeholder="Enter your department" value={department} onChange={(e) => setDepartment(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-0 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary" />
           </div>
 
           <div className="space-y-2">
