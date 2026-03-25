@@ -110,7 +110,7 @@ const CreateAccountPage = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="rollno" className="text-sm font-medium text-foreground">Roll No</Label>
+            <Label htmlFor="rollno" className="text-sm font-medium text-foreground">Roll No (only for students)</Label>
             <Input id="rollno" placeholder="Enter your Roll No" value={rollNo} onChange={(e) => setRollNo(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-0 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary" />
           </div>
 
