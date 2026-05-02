@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Backend
+backend/.env
+backend/__pycache__/
+backend/app/__pycache__/
+uploads/
+training_data/

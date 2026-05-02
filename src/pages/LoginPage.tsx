@@ -37,20 +37,8 @@ const LoginPage = () => {
 
     setLoading(true);
     try {
-      // Use username as email for the API (or append @lipika.local if API expects email format)
-      const email = username.includes("@") ? username : `${username.toLowerCase().replace(/\s+/g, "")}@lipika.local`;
-      const { user } = await login({ email, password });
-
-      // Verify role matches
-      if (user.role !== role) {
-        toast({
-          title: "Login failed",
-          description: "The selected role does not match your account. Please select the correct role.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
+      // Send username, password, and role directly to the backend
+      await login({ username, password, role });
 
       toast({
         title: "Login successful",
@@ -67,7 +55,7 @@ const LoginPage = () => {
     } catch (err: unknown) {
       toast({
         title: "Login failed",
-        description: err instanceof Error ? err.message : "User does not found. Please check your credentials.",
+        description: err instanceof Error ? err.message : "User not found. Please check your credentials.",
         variant: "destructive",
       });
     } finally {

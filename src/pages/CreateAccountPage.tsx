@@ -40,18 +40,18 @@ const CreateAccountPage = () => {
 
     setLoading(true);
     try {
-      const email = `${username.toLowerCase().replace(/\s+/g, "")}@lipika.local`;
+      // Send data matching backend's UserCreate schema
       await signup({
         name,
-        email,
-        password,
-        role,
+        username,
         roll_number: rollNo,
+        password,
         department,
+        role,
       });
 
-      // Auto-login after signup
-      await login({ email, password });
+      // Auto-login after signup using username, password, and role
+      await login({ username, password, role });
 
       toast({
         title: "Account created!",

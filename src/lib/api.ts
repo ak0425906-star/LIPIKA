@@ -16,17 +16,18 @@ export interface UserOut {
 
 export interface UserCreate {
   name: string;
-  email: string;
+  username: string;
+  roll_number: string;
   password: string;
+  department: string;
   role: string;
-  roll_number?: string;
-  department?: string;
   year?: string;
 }
 
 export interface UserLogin {
-  email: string;
+  username: string;
   password: string;
+  role: string;
 }
 
 function setAuth(token: string, user: UserOut) {
@@ -87,7 +88,7 @@ export async function login(data: UserLogin): Promise<{ token: string; user: Use
     method: "POST",
     body: JSON.stringify(data),
   });
-  // Adapt to whatever the API returns - typically { access_token, user } or { token, ... }
+  // Backend returns { access_token, token_type, user: { id, name, email, role, ... } }
   const token = res.access_token || res.token;
   const user: UserOut = res.user || res;
   if (token) {
