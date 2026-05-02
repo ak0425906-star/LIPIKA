@@ -39,8 +39,8 @@ type FilterType = "all" | "strong" | "moderate" | "weak" | "not-submitted" | "su
 
 // Helpers
 const getMatchStatus = (percent: number): { label: string; color: string } => {
-  if (percent >= 78) return { label: "Strong Match", color: "text-emerald-500" };
-  if (percent >= 58) return { label: "Moderate Match", color: "text-amber-500" };
+  if (percent >= 85) return { label: "Strong Match", color: "text-emerald-500" };
+  if (percent >= 60) return { label: "Moderate Match", color: "text-amber-500" };
   return { label: "Weak Match", color: "text-red-500" };
 };
 
@@ -256,9 +256,9 @@ const TeacherDashboard = () => {
   const filteredSubmissions = useMemo(() => {
     if (filter === "not-submitted" || filter === "submitted" || filter === "rejected") return [];
     let list = assignmentSubmissions;
-    if (filter === "strong") list = list.filter((s) => s.matchPercent >= 78);
-    else if (filter === "moderate") list = list.filter((s) => s.matchPercent >= 58 && s.matchPercent < 78);
-    else if (filter === "weak") list = list.filter((s) => s.matchPercent < 58);
+    if (filter === "strong") list = list.filter((s) => s.matchPercent >= 85);
+    else if (filter === "moderate") list = list.filter((s) => s.matchPercent >= 60 && s.matchPercent < 85);
+    else if (filter === "weak") list = list.filter((s) => s.matchPercent < 60);
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -269,9 +269,9 @@ const TeacherDashboard = () => {
 
   const getSubjectStats = (data: SubjectData) => {
     const total = data.submissions.length;
-    const strong = data.submissions.filter((s) => s.matchPercent >= 78).length;
-    const moderate = data.submissions.filter((s) => s.matchPercent >= 58 && s.matchPercent < 78).length;
-    const weak = data.submissions.filter((s) => s.matchPercent < 58).length;
+    const strong = data.submissions.filter((s) => s.matchPercent >= 85).length;
+    const moderate = data.submissions.filter((s) => s.matchPercent >= 60 && s.matchPercent < 85).length;
+    const weak = data.submissions.filter((s) => s.matchPercent < 60).length;
     return { total, strong, moderate, weak };
   };
 

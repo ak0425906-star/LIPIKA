@@ -25,7 +25,17 @@ dist-ssr
 
 # Backend
 backend/.env
-backend/__pycache__/
 backend/app/__pycache__/
+__pycache__/
+*.pyc
+
+# Upload directories (created at runtime)
 uploads/
 training_data/
+
+# ML Model (too large for git — keep locally)
+model/
+
+# Legacy / unused
+supabase/
+env.txt
