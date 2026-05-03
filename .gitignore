@@ -39,3 +39,9 @@ model/
 # Legacy / unused
 supabase/
 env.txt
+bun.lock
+sync-git.ps1
+src/integrations/supabase/
+
+# Word temp files
+~$*.docx
