@@ -193,6 +193,42 @@ async def upload_assignment(
     }
 
 # -----------------------------
+# STUDENT: UPLOAD REFERENCE IMAGES
+# -----------------------------
+@app.post("/upload-reference")
+async def upload_reference(
+    files: List[UploadFile] = File(...),
+    db: Session = Depends(get_db),
+    current_user = Depends(auth.get_current_user)
+):
+    # Ensure role is student
+    if current_user.role != "student":
+        raise HTTPException(status_code=403, detail="Only students can upload reference images")
+
+    saved_files = []
+    folder = os.path.join(TRAIN_DIR, f"student_{current_user.username}")
+    
+    for file in files:
+        file_path = save_upload_file(file, folder)
+        
+        new_reference = models.Assignment(
+            student_username=current_user.username,
+            image_path=file_path,
+            is_reference=1,
+            is_training=True,
+            similarity_score=100.0
+        )
+        db.add(new_reference)
+        saved_files.append(file_path)
+    
+    db.commit()
+    
+    return {
+        "message": f"{len(saved_files)} reference images uploaded successfully",
+        "paths": saved_files
+    }
+
+# -----------------------------
 # TEACHER DASHBOARD
 # -----------------------------
 @app.get("/teacher/assignments")

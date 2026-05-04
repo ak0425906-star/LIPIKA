@@ -111,6 +111,17 @@ export async function uploadAssignment(file: File): Promise<unknown> {
   });
 }
 
+export async function uploadReference(files: File[]): Promise<unknown> {
+  const formData = new FormData();
+  files.forEach(file => {
+    formData.append("files", file);
+  });
+  return apiFetch("/upload-reference", {
+    method: "POST",
+    body: formData,
+  });
+}
+
 export async function getTeacherAssignments(): Promise<unknown> {
   return apiFetch("/teacher/assignments");
 }

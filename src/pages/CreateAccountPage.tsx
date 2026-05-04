@@ -14,6 +14,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { signup, login } from "@/lib/api";
+import ReferenceUploadModal from "@/components/ReferenceUploadModal";
 
 const CreateAccountPage = () => {
   const [name, setName] = useState("");
@@ -24,6 +25,7 @@ const CreateAccountPage = () => {
   const [role, setRole] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showReferenceModal, setShowReferenceModal] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -58,9 +60,9 @@ const CreateAccountPage = () => {
         description: `Welcome, ${name}!`,
       });
 
-      // Redirect to role-specific dashboard
+      // Redirect to role-specific dashboard or show reference modal
       if (role === "student") {
-        navigate("/student-dashboard");
+        setShowReferenceModal(true);
       } else if (role === "teacher") {
         navigate("/teacher-dashboard");
       } else if (role === "admin") {
@@ -159,6 +161,13 @@ const CreateAccountPage = () => {
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-8 text-xs text-muted-foreground">
         © 2026 LIPIKA. All rights reserved.
       </motion.p>
+
+      <ReferenceUploadModal
+        isOpen={showReferenceModal}
+        onClose={() => navigate("/student-dashboard")}
+        onComplete={() => navigate("/student-dashboard")}
+        studentName={name}
+      />
     </div>
   );
 };
