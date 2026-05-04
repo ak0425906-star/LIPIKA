@@ -67,8 +67,14 @@ def read_root():
 
 @app.post("/signup", response_model=schemas.UserOut)
 def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    # Ensure role is set; default to student if not provided
-    return auth.create_user(db, user)
+    print("Executing new signup logic without email...")
+    try:
+        return auth.create_user(db, user)
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        print(tb)
+        raise HTTPException(status_code=400, detail=str(tb))
 
 @app.post("/login")
 def login(user_data: schemas.UserLogin, db: Session = Depends(get_db)):
