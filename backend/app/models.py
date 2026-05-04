@@ -7,10 +7,9 @@ from .database import Base
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, primary_key=True, index=True)
     name = Column(String)
-    email = Column(String, unique=True, index=True)
-    password = Column(String)
+    password = Column(String, unique=True, nullable=False)
     role = Column(String)
 
     roll_number = Column(String)
@@ -24,7 +23,7 @@ class User(Base):
 class Assignment(Base):
     __tablename__ = "assignments"
     id = Column(Integer, primary_key=True, index=True)
-    student_id = Column(Integer, ForeignKey("users.id"))
+    student_username = Column(String, ForeignKey("users.username"))
     image_path = Column(String)
     is_reference = Column(Integer, default=0)
     is_training = Column(Boolean, default=False)

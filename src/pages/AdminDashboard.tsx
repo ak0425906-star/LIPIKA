@@ -88,8 +88,12 @@ const AdminDashboard = () => {
   const allTeacherNames = teacherSubjects.map((ts) => ts.teacher);
   const filteredTeachersForAdd = useMemo(() => {
     if (!selectedSubjectForAssign) return [];
-    const assigned = getTeachersForSubject(selectedSubjectForAssign).map((t) => t.teacher);
-    const available = allTeacherNames.filter((t) => !assigned.includes(t));
+    const assigned = teacherSubjects
+      .filter((ts) => ts.subjects.includes(selectedSubjectForAssign))
+      .map((t) => t.teacher);
+    const available = teacherSubjects
+      .map((ts) => ts.teacher)
+      .filter((t) => !assigned.includes(t));
     if (!teacherSearch.trim()) return available;
     return available.filter((t) => t.toLowerCase().includes(teacherSearch.toLowerCase()));
   }, [selectedSubjectForAssign, teacherSearch, teacherSubjects]);

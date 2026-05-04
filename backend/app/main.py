@@ -86,15 +86,14 @@ def login(user_data: schemas.UserLogin, db: Session = Depends(get_db)):
             detail="Invalid credentials or incorrect role selected"
         )
     
-    token = auth.create_access_token(data={"sub": str(user.id)})
+    token = auth.create_access_token(data={"sub": str(user.username)})
     
     return {
         "access_token": token,
         "token_type": "bearer",
         "user": {
-            "id": user.id,
+            "username": user.username,
             "name": user.name,
-            "email": user.email,
             "role": user.role,
             "roll_number": user.roll_number,
             "department": user.department,
@@ -136,14 +135,14 @@ async def upload_assignment(
 
     # Check for existing reference
     reference = db.query(models.Assignment).filter(
-        models.Assignment.student_id == current_user.id,
+        models.Assignment.student_username == current_user.username,
         models.Assignment.is_reference == 1
     ).first()
 
     # If first time, this becomes the master reference
     if reference is None:
         new_assignment = models.Assignment(
-            student_id=current_user.id,
+            student_username=current_user.username,
             image_path=file_path,
             is_reference=1,
             is_training=True,
@@ -171,7 +170,7 @@ async def upload_assignment(
         similarity = 0.0
 
     new_assignment = models.Assignment(
-        student_id=current_user.id,
+        student_username=current_user.username,
         image_path=file_path,
         is_reference=0,
         is_training=False,
@@ -197,7 +196,7 @@ def get_assignments(
 ):
     # Join assignments with user data to show names in the dashboard
     query_result = db.query(models.Assignment, models.User).join(
-        models.User, models.Assignment.student_id == models.User.id
+        models.User, models.Assignment.student_username == models.User.username
     ).filter(models.Assignment.is_reference == 0).all()
 
     data_list = []
@@ -256,9 +255,8 @@ def get_admin_students(
     students = db.query(models.User).filter(models.User.role == "student").all()
     return [
         {
-            "id": s.id,
+            "username": s.username,
             "name": s.name,
-            "email": s.email,
             "roll_number": s.roll_number,
             "department": s.department,
             "year": s.year
@@ -284,11 +282,11 @@ def upload_training_by_roll(
     if not student:
         raise HTTPException(status_code=404, detail="Student roll number not found")
 
-    folder = os.path.join(TRAIN_DIR, f"student_{student.id}")
+    folder = os.path.join(TRAIN_DIR, f"student_{student.username}")
     file_path = save_upload_file(file, folder)
 
     new_training = models.Assignment(
-        student_id=student.id,
+        student_username=student.username,
         image_path=file_path,
         is_reference=0,
         is_training=True,

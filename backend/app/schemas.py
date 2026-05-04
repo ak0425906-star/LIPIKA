@@ -23,9 +23,8 @@ class UserLogin(BaseModel):
 
 
 class UserOut(BaseModel):
-    id: int
     name: str
-    email: str
+    username: str
     role: str
     roll_number: Optional[str] = None
     department: Optional[str] = None

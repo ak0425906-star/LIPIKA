@@ -62,7 +62,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 # -----------------------------
 def create_user(db: Session, user: schemas.UserCreate):
     # Check if user already exists (by email/username)
-    existing_user = db.query(models.User).filter(models.User.email == user.username).first()
+    existing_user = db.query(models.User).filter(models.User.username == user.username).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -73,7 +73,7 @@ def create_user(db: Session, user: schemas.UserCreate):
     
     db_user = models.User(
         name=user.name,
-        email=user.username,       # Store username in the email field
+        username=user.username,       # Store username
         password=hashed_pass,
         role=user.role,
         roll_number=user.roll_number,
@@ -92,7 +92,7 @@ def create_user(db: Session, user: schemas.UserCreate):
 def authenticate_user(db: Session, username: str, password: str, role: str):
     # Search for a user where (email OR roll_number) matches AND the role matches
     user = db.query(models.User).filter(
-        ((models.User.email == username) | (models.User.roll_number == username)),
+        ((models.User.username == username) | (models.User.roll_number == username)),
         (models.User.role == role)
     ).first()
     
@@ -139,8 +139,8 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    # Query the user by ID
-    user = db.query(models.User).filter(models.User.id == int(user_id)).first()
+    # Query the user by username
+    user = db.query(models.User).filter(models.User.username == user_id).first()
     
     if user is None:
         raise HTTPException(

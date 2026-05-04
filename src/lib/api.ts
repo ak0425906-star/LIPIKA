@@ -1,4 +1,4 @@
-const API_BASE = "https://thxanozz.onrender.com";
+const API_BASE = "/api";
 
 // Token management
 let authToken: string | null = localStorage.getItem("lipika_token");
