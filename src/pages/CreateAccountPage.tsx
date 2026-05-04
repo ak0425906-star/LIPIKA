@@ -69,9 +69,20 @@ const CreateAccountPage = () => {
         navigate("/admin-dashboard");
       }
     } catch (err: unknown) {
+      let errorMessage = "Something went wrong. Please try again.";
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+        
+        // Custom friendly messages for common errors
+        if (errorMessage === "Username already registered") {
+          errorMessage = "This username is already taken. Please choose a different one.";
+        }
+      }
+
       toast({
         title: "Registration failed",
-        description: err instanceof Error ? err.message : "Something went wrong.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

@@ -55,10 +55,66 @@ const StudentDashboard = () => {
     if (!isAuthenticated()) { navigate("/"); return; }
     const user = getCurrentUser();
     if (!user || user.role !== "student") { navigate("/"); return; }
+    
     setFullName(user.name || "Student");
     setDepartment(user.department || "");
-    // Subjects start empty — will be populated from API
-  }, [navigate]);
+
+    // Populate subjects for Semester 6 specifically for students
+    if (semester === "6") {
+      setSubjects([
+        {
+          name: "Software Testing",
+          assignments: [
+            {
+              name: "Unit Testing Lab",
+              description: "Implement JUnit tests for the provided Java classes.",
+              dueDate: "2026-05-15",
+              status: "Pending",
+              teacher: "Dr. Smith"
+            }
+          ]
+        },
+        {
+          name: "Information Security",
+          assignments: [
+            {
+              name: "RSA Algorithm Implementation",
+              description: "Write a Python script to demonstrate RSA encryption and decryption.",
+              dueDate: "2026-05-20",
+              status: "Pending",
+              teacher: "Prof. Johnson"
+            }
+          ]
+        },
+        {
+          name: "Computer Networks",
+          assignments: [
+            {
+              name: "TCP/UDP Socket Programming",
+              description: "Create a simple chat application using TCP sockets.",
+              dueDate: "2026-05-18",
+              status: "Pending",
+              teacher: "Dr. Williams"
+            }
+          ]
+        },
+        {
+          name: "Free and Open Source",
+          assignments: [
+            {
+              name: "Git Flow Exercise",
+              description: "Demonstrate branching, merging, and pull request workflows on GitHub.",
+              dueDate: "2026-05-25",
+              status: "Pending",
+              teacher: "Prof. Davis"
+            }
+          ]
+        }
+      ]);
+    } else {
+      setSubjects([]);
+    }
+  }, [navigate, semester]);
 
   const handleLogout = async () => {
     await logout();
@@ -213,124 +269,280 @@ const StudentDashboard = () => {
           )}
         </AnimatePresence>
 
-        {subjects.length > 0 ? (
-          <>
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15 }} className="mb-8 grid grid-cols-2 gap-4">
-              {subjects.map((subject, i) => (
-                <Card
-                  key={i}
-                  className={`border-0 shadow-md cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] ${selectedSubject === subject.name ? "ring-2 ring-primary" : ""}`}
-                  onClick={() => { setSelectedSubject(selectedSubject === subject.name ? null : subject.name); setExpandedAssignment(null); }}
-                >
-                  <CardContent className="flex flex-col items-center gap-3 p-7">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <BookOpen className="h-7 w-7" />
+        <AnimatePresence mode="wait">
+          {!selectedSubject ? (
+            subjects.length > 0 ? (
+              <motion.div 
+                key="grid"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+                className="grid grid-cols-2 gap-4"
+              >
+                {subjects.map((subject, i) => (
+                  <Card
+                    key={i}
+                    className="group border-0 shadow-md cursor-pointer transition-all hover:shadow-xl hover:scale-[1.03] active:scale-[0.98] bg-card/80 backdrop-blur-sm"
+                    onClick={() => { setSelectedSubject(subject.name); setExpandedAssignment(null); }}
+                  >
+                    <CardContent className="flex flex-col items-center gap-4 p-8">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                        <BookOpen className="h-8 w-8" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="text-base font-bold text-foreground leading-tight">{subject.name}</h3>
+                        <p className="text-xs text-muted-foreground mt-1">{subject.assignments.length} Total Assignments</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="empty"
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                className="flex flex-col items-center justify-center py-24 text-center bg-card/30 rounded-3xl border border-dashed border-border"
+              >
+                <div className="h-20 w-20 rounded-full bg-secondary/50 flex items-center justify-center mb-6">
+                  <BookOpen className="h-10 w-10 text-muted-foreground/40" />
+                </div>
+                <p className="text-lg font-bold text-foreground">No subjects found</p>
+                <p className="text-sm text-muted-foreground mt-2 max-w-[250px]">Your subjects will appear here once assigned by the teacher for Sem {semester}.</p>
+              </motion.div>
+            )
+          ) : activeSubject && (
+            <motion.div 
+              key="details"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
+              {/* Detailed View Header */}
+              <div className="flex items-center justify-between bg-card/50 p-4 rounded-2xl border border-border/50 backdrop-blur-sm">
+                <div className="flex items-center gap-4">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setSelectedSubject(null)}
+                    className="h-10 w-10 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground"
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </Button>
+                  <div>
+                    <h2 className="text-xl font-black tracking-tight text-foreground uppercase">{activeSubject.name}</h2>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Semester {semester} Dashboard</span>
                     </div>
-                    <span className="text-sm font-semibold text-center text-foreground leading-tight">{subject.name}</span>
-                    <span className="text-xs text-muted-foreground">{subject.assignments.length} assignment{subject.assignments.length !== 1 ? "s" : ""}</span>
-                  </CardContent>
-                </Card>
-              ))}
-            </motion.div>
+                  </div>
+                </div>
+              </div>
 
-            {activeSubject && (
-              <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="mb-6">
-                <Card className="border-0 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
+              <Card className="border-0 shadow-2xl shadow-primary/5 bg-card/80 backdrop-blur-md overflow-hidden">
+                <CardHeader className="border-b border-border/50 bg-secondary/20">
+                  <CardTitle className="flex items-center gap-3 text-lg font-bold">
+                    <div className="p-2 bg-primary/10 rounded-lg">
                       <BookOpen className="h-5 w-5 text-primary" />
-                      {activeSubject.name} — Assignments
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {activeSubject.assignments.map((item, i) => (
-                      <div key={i}>
-                        <div className="flex items-center justify-between rounded-xl bg-secondary/40 px-4 py-3 cursor-pointer hover:bg-secondary/60 transition-colors" onClick={() => handleAssignmentClick(item.name)}>
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-sm font-medium text-foreground">{item.name}</span>
-                            <span className="text-xs text-muted-foreground">{item.teacher}</span>
-                            <span className="text-xs text-muted-foreground">Due: {new Date(item.dueDate).toLocaleDateString()}</span>
+                    </div>
+                    Current Assignments
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-8">
+                  {/* Pending Assignments */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-border/50 pb-2">
+                      <h3 className="text-xs font-black text-amber-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                        Pending Submissions
+                      </h3>
+                      <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full">
+                        {activeSubject.assignments.filter(a => a.status === "Pending").length} Action Required
+                      </span>
+                    </div>
+                    
+                    {activeSubject.assignments.filter(a => a.status === "Pending").length > 0 ? (
+                      activeSubject.assignments.filter(a => a.status === "Pending").map((item, i) => (
+                        <div key={i} className="group">
+                          <div 
+                            className={`flex items-center justify-between rounded-2xl border transition-all p-5 cursor-pointer ${expandedAssignment === item.name ? "bg-primary/5 border-primary/30 shadow-lg shadow-primary/5" : "bg-secondary/40 border-transparent hover:border-primary/20 hover:bg-secondary/60 shadow-sm"}`}
+                            onClick={() => handleAssignmentClick(item.name)}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${expandedAssignment === item.name ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}>
+                                <Upload className="h-5 w-5" />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-black text-foreground">{item.name}</span>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Deadline: {new Date(item.dueDate).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                            <Button variant={expandedAssignment === item.name ? "secondary" : "default"} size="sm" className="h-9 rounded-xl px-5 text-xs font-black shadow-md">
+                              {expandedAssignment === item.name ? "Cancel" : "Upload"}
+                            </Button>
                           </div>
-                          <div className="flex flex-col items-end gap-1">
-                            <span className={`text-xs font-semibold ${item.status === "Completed" ? "text-emerald-500" : "text-amber-500"}`}>
-                              {item.status}
-                            </span>
-                            {item.status === "Completed" && getVerificationBadge(item.verificationStatus)}
-                          </div>
-                        </div>
 
-                        <AnimatePresence>
-                          {expandedAssignment === item.name && (
-                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                              <div className="mt-2 rounded-xl bg-card border border-border p-4">
-                                {item.description && (
-                                  <p className="text-xs text-muted-foreground mb-3 italic">{item.description}</p>
-                                )}
-                                {item.status === "Completed" ? (
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-2">Uploaded Images</p>
-                                    {item.uploadedImages && item.uploadedImages.length > 0 ? (
-                                      <div className="grid grid-cols-3 gap-2">
-                                        {item.uploadedImages.map((src, idx) => (
-                                          <img key={idx} src={src} alt={`Upload ${idx + 1}`} className="h-20 w-full rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={(e) => { e.stopPropagation(); setPreviewImages({ images: item.uploadedImages!, index: idx }); }} />
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <p className="text-xs text-muted-foreground italic">No images available for preview.</p>
-                                    )}
+                          <AnimatePresence>
+                            {expandedAssignment === item.name && (
+                              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                                <div className="mt-3 rounded-2xl bg-background/50 border border-border/50 p-6 space-y-5">
+                                  <div className="space-y-1">
+                                    <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Assignment Brief</h4>
+                                    <p className="text-xs text-foreground/80 leading-relaxed italic">{item.description}</p>
                                   </div>
-                                ) : (
-                                  <div className="flex flex-col gap-3">
+
+                                  <div className="flex flex-col gap-4">
                                     {uploadingFor === item.name ? (
-                                      <div className="flex flex-col items-center gap-2 py-4">
-                                        <CheckCircle2 className="h-10 w-10 text-primary" />
-                                        <p className="text-sm font-semibold text-foreground">Upload Completed!</p>
+                                      <div className="flex flex-col items-center gap-4 py-8 bg-primary/5 rounded-2xl border border-primary/20">
+                                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full" />
+                                        <p className="text-sm font-black text-primary animate-pulse">Syncing with Server...</p>
                                       </div>
                                     ) : (
                                       <>
-                                        <button type="button" onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }} className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/30 bg-secondary/30 p-5 transition-colors hover:border-primary/60">
-                                          <ImagePlus className="h-8 w-8 text-primary/60" />
-                                          <span className="text-xs font-medium text-muted-foreground">Tap to select images</span>
+                                        <button 
+                                          type="button" 
+                                          onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }} 
+                                          className="flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-primary/20 bg-primary/5 p-10 transition-all hover:border-primary/50 hover:bg-primary/10 group/drop"
+                                        >
+                                          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-background shadow-xl text-primary transition-transform group-hover/drop:scale-110 group-hover/drop:rotate-6">
+                                            <ImagePlus className="h-7 w-7" />
+                                          </div>
+                                          <div className="text-center space-y-1">
+                                            <span className="block text-sm font-black text-foreground">Tap to add handwriting samples</span>
+                                            <span className="text-[10px] text-primary/70 font-bold uppercase tracking-[0.1em]">No File Limit — Upload multiple for accuracy</span>
+                                          </div>
                                         </button>
                                         <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+                                        
                                         {uploadPreviews.length > 0 && (
-                                          <div className="grid grid-cols-3 gap-2">
+                                          <div className="grid grid-cols-3 gap-4">
                                             {uploadPreviews.map((src, idx) => (
-                                              <div key={idx} className="relative group">
-                                                <img src={src} alt={`Preview ${idx + 1}`} className="h-20 w-full rounded-lg object-cover" />
-                                                <button type="button" onClick={(e) => { e.stopPropagation(); removePreview(idx); }} className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                                                  <X className="h-3 w-3" />
+                                              <div key={idx} className="relative aspect-square group/preview">
+                                                <img src={src} alt={`Preview ${idx + 1}`} className="h-full w-full rounded-xl object-cover shadow-md ring-2 ring-transparent transition-all group-hover/preview:ring-primary" />
+                                                <button type="button" onClick={(e) => { e.stopPropagation(); removePreview(idx); }} className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-xl hover:scale-125 transition-transform active:scale-95">
+                                                  <X className="h-4 w-4" />
                                                 </button>
                                               </div>
                                             ))}
                                           </div>
                                         )}
-                                        <Button onClick={(e) => { e.stopPropagation(); handleUploadSubmit(activeSubject.name, item.name); }} disabled={uploadFiles.length === 0} className="h-10 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-md shadow-primary/20 hover:opacity-90 transition-opacity">
-                                          <Upload className="h-4 w-4 mr-2" />
-                                          Upload {uploadFiles.length > 0 ? `(${uploadFiles.length})` : ""}
+                                        
+                                        <Button 
+                                          onClick={(e) => { e.stopPropagation(); handleUploadSubmit(activeSubject.name, item.name); }} 
+                                          disabled={uploadFiles.length === 0} 
+                                          className="h-12 w-full rounded-xl bg-primary text-primary-foreground font-black shadow-xl shadow-primary/30 hover:shadow-primary/50 transition-all active:scale-[0.98]"
+                                        >
+                                          <Upload className="h-5 w-5 mr-3" />
+                                          Submit {uploadFiles.length > 0 ? `${uploadFiles.length} Handwriting Samples` : "Final Submission"}
                                         </Button>
                                       </>
                                     )}
                                   </div>
-                                )}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="py-6 text-center bg-secondary/20 rounded-2xl border border-dashed border-border/50">
+                        <CheckCircle2 className="h-8 w-8 text-emerald-500/30 mx-auto mb-2" />
+                        <p className="text-xs text-muted-foreground font-bold italic uppercase tracking-wider">All caught up! No pending work.</p>
                       </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-          </>
-        ) : (
-          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center py-20 text-center">
-            <BookOpen className="h-12 w-12 text-muted-foreground/40 mb-4" />
-            <p className="text-muted-foreground font-medium">No subjects or assignments available yet.</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Assignments will appear here when your teacher publishes them.</p>
-          </motion.div>
-        )}
+                    )}
+                  </div>
+
+                  {/* Completed Assignments */}
+                  <div className="space-y-4 pt-4">
+                    <div className="flex items-center justify-between border-b border-border/50 pb-2">
+                      <h3 className="text-xs font-black text-emerald-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                        Completed Records
+                      </h3>
+                      <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-full">
+                        {activeSubject.assignments.filter(a => a.status === "Completed").length} Verified
+                      </span>
+                    </div>
+
+                    {activeSubject.assignments.filter(a => a.status === "Completed").length > 0 ? (
+                      activeSubject.assignments.filter(a => a.status === "Completed").map((item, i) => (
+                        <div key={i} className="group">
+                          <div 
+                            className={`flex items-center justify-between rounded-2xl border transition-all p-5 cursor-pointer ${expandedAssignment === item.name ? "bg-emerald-500/5 border-emerald-500/30" : "bg-emerald-500/10 border-transparent hover:bg-emerald-500/15"}`}
+                            onClick={() => handleAssignmentClick(item.name)}
+                          >
+                            <div className="flex flex-col gap-1">
+                              <span className="text-sm font-black text-foreground">{item.name}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[9px] font-black bg-emerald-500/20 text-emerald-700 px-1.5 py-0.5 rounded-md uppercase tracking-wider">Success</span>
+                                <span className="text-[10px] text-muted-foreground font-bold">Ref: {new Date(item.dueDate).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              {getVerificationBadge(item.verificationStatus)}
+                              <div className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${expandedAssignment === item.name ? "bg-emerald-500 text-white" : "bg-emerald-500/20 text-emerald-600"}`}>
+                                <CheckCircle2 className="h-4 w-4" />
+                              </div>
+                            </div>
+                          </div>
+
+                          <AnimatePresence>
+                            {expandedAssignment === item.name && (
+                              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                                <div className="mt-3 rounded-2xl bg-background/50 border border-border/50 p-6 space-y-6">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                      <ImagePlus className="h-3 w-3" />
+                                      Digital Reference Archive
+                                    </h4>
+                                    <span className="text-[9px] font-black bg-secondary px-2 py-1 rounded-lg shadow-sm tracking-tighter uppercase">{item.uploadedImages?.length || 0} Files Locked</span>
+                                  </div>
+
+                                  {item.uploadedImages && item.uploadedImages.length > 0 ? (
+                                    <div className="grid grid-cols-3 gap-4">
+                                      {item.uploadedImages.map((src, idx) => (
+                                        <div key={idx} className="relative aspect-square group/img cursor-pointer overflow-hidden rounded-xl shadow-md transition-transform hover:scale-105 active:scale-95" onClick={(e) => { e.stopPropagation(); setPreviewImages({ images: item.uploadedImages!, index: idx }); }}>
+                                          <img src={src} alt={`Upload ${idx + 1}`} className="h-full w-full object-cover ring-1 ring-border" />
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-end p-2">
+                                            <span className="text-[9px] text-white font-black uppercase tracking-widest">Enlarge</span>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="py-12 text-center border-2 border-dashed border-border/40 rounded-3xl bg-secondary/5">
+                                      <X className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
+                                      <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">No visual records found</p>
+                                    </div>
+                                  )}
+                                  
+                                  <Button 
+                                    variant="ghost" 
+                                    className="w-full h-11 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-destructive/5 hover:text-destructive transition-colors" 
+                                    onClick={(e) => { e.stopPropagation(); setExpandedAssignment(null); }}
+                                  >
+                                    Collapse Archive View
+                                  </Button>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="py-8 text-center bg-secondary/10 rounded-2xl border border-dashed border-border/50">
+                        <p className="text-xs text-muted-foreground font-bold italic uppercase tracking-wider">No completed records found for this term.</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Image Carousel Dialog */}

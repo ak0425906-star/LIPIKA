@@ -22,6 +22,15 @@ and generates a **similarity score** — helping teachers detect whether an assi
 
 ---
 
+## 🆕 Recent Updates
+
+- **🚀 Smart Reference Onboarding**: Enhanced multi-image handwriting baseline collection during registration.
+- **📱 Fluid Dashboard Experience**: Refactored Student UI with full-screen subject views and organized assignment tracking.
+- **✅ Real-time Verification Feedback**: Clear visual indicators (🟢 Accepted / 🔴 Rejected) for student submissions.
+- **📚 Sem 6 Curated Subjects**: Integrated support for Software Testing, Information Security, Computer Networks, and FOSS.
+
+---
+
 ## 📌 Key Features
 
 | Feature | Description |
@@ -29,7 +38,7 @@ and generates a **similarity score** — helping teachers detect whether an assi
 | 🧠 **Handwriting Verification** | Compares submissions against a student's reference handwriting using an ML model on Hugging Face |
 | 🔐 **Secure Authentication** | JWT-based login with bcrypt password hashing. Login via username or roll number |
 | 👥 **Role-Based Dashboards** | Three roles — **Student**, **Teacher**, **Admin** — each with dedicated dashboards |
-| 📤 **Assignment Upload** | Students upload handwriting images; first upload becomes the reference sample |
+| 📁 **Smart Reference Archive** | Multi-image baseline collection with "No Limit" upload during onboarding |
 | 📊 **Teacher Review Panel** | Teachers view all submissions with similarity scores, match types, and accept/reject actions |
 | 🛡️ **Admin Control Panel** | Admins manage students and upload training data for the ML model |
 

@@ -67,14 +67,18 @@ def read_root():
 
 @app.post("/signup", response_model=schemas.UserOut)
 def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    print("Executing new signup logic without email...")
     try:
         return auth.create_user(db, user)
+    except HTTPException:
+        # Re-raise FastAPI's HTTPException to return the correct JSON response
+        raise
     except Exception as e:
-        import traceback
-        tb = traceback.format_exc()
-        print(tb)
-        raise HTTPException(status_code=400, detail=str(tb))
+        # Log the error on the server but return a clean message to the client
+        print(f"INTERNAL SIGNUP ERROR: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail="An unexpected error occurred. Please try again later."
+        )
 
 @app.post("/login")
 def login(user_data: schemas.UserLogin, db: Session = Depends(get_db)):

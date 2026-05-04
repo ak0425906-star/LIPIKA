@@ -69,8 +69,28 @@ async function apiFetch(path: string, options: RequestInit = {}) {
   }
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(typeof err.detail === "string" ? err.detail : JSON.stringify(err.detail));
+    let errorMessage = res.statusText;
+    try {
+      const err = await res.json();
+      if (err && typeof err.detail === "string") {
+        errorMessage = err.detail;
+      } else if (err && err.message) {
+        errorMessage = err.message;
+      } else if (err && typeof err === "string") {
+        errorMessage = err;
+      } else if (err) {
+        errorMessage = JSON.stringify(err);
+      }
+    } catch (e) {
+      // Not JSON, use statusText
+    }
+    
+    // Clean up traceback-like messages
+    if (errorMessage.includes("Traceback (most recent call last)")) {
+      errorMessage = "A server error occurred. Please try again.";
+    }
+    
+    throw new Error(errorMessage);
   }
   return res.json();
 }

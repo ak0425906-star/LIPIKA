@@ -75,9 +75,6 @@ const ReferenceUploadModal = ({
       <DialogContent className="sm:max-w-md rounded-2xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">Welcome, {studentName}!</DialogTitle>
-          <DialogDescription>
-            Please upload some samples of your handwriting. This will be used as a reference to verify your future assignments.
-          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 py-4">
@@ -102,7 +99,7 @@ const ReferenceUploadModal = ({
               <motion.div key="upload" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                 <div className="flex items-start gap-3 rounded-xl bg-primary/5 p-4 text-sm text-primary">
                   <Info className="h-5 w-5 shrink-0" />
-                  <p>Upload 2-3 clear images of your own handwritten work for the best accuracy.</p>
+                  <p>Upload clear images of your own handwritten work. There is no limit—upload as many as you want for the best accuracy.</p>
                 </div>
 
                 <button
