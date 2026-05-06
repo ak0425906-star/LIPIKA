@@ -151,7 +151,6 @@ const CreateAccountPage = () => {
               <SelectContent className="rounded-xl">
                 <SelectItem value="student">🎓 Student</SelectItem>
                 <SelectItem value="teacher">🧑‍🏫 Teacher</SelectItem>
-                <SelectItem value="admin">🛡️ Admin</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -18,6 +18,24 @@ class User(Base):
 
     # Relationship to Assignment model
     assignments = relationship("Assignment", back_populates="student")
+    # Subjects assigned to this teacher
+    subjects = relationship("Subject", secondary="teacher_subjects", back_populates="teachers")
+
+
+class Subject(Base):
+    __tablename__ = "subjects"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+    department = Column(String)
+    
+    teachers = relationship("User", secondary="teacher_subjects", back_populates="subjects")
+
+
+class TeacherSubject(Base):
+    __tablename__ = "teacher_subjects"
+    id = Column(Integer, primary_key=True, index=True)
+    teacher_username = Column(String, ForeignKey("users.username"))
+    subject_id = Column(Integer, ForeignKey("subjects.id"))
 
 
 class Assignment(Base):
@@ -27,6 +45,9 @@ class Assignment(Base):
     image_path = Column(String)
     is_reference = Column(Integer, default=0)
     is_training = Column(Boolean, default=False)
+    
+    # New: link assignment to a specific subject
+    subject_name = Column(String, nullable=True)
 
     # Assignment metadata
     status = Column(String, default="pending")

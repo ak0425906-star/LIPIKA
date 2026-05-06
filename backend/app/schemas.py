@@ -32,3 +32,19 @@ class UserOut(BaseModel):
 
     # Modern Pydantic v2 way to handle SQLAlchemy models
     model_config = ConfigDict(from_attributes=True)
+
+
+class SubjectBase(BaseModel):
+    name: str
+    department: str
+
+class SubjectCreate(SubjectBase):
+    pass
+
+class SubjectOut(SubjectBase):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
+class TeacherSubjectUpdate(BaseModel):
+    teacher_username: str
+    subject_ids: list[int]

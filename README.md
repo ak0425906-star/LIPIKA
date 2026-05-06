@@ -1,253 +1,141 @@
 <div align="center">
 
 # ✍️ LIPIKA
+### Next-Gen AI Handwriting Verification & Academic Integrity Platform
 
-### AI-Powered Handwriting Verification System
-
-> *Verify. Authenticate. Trust.*
+> *The definitive bridge between traditional handwriting and digital authentication.*
 
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![FastAPI](https://img.staticfiles.com/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech)
-
----
-
-**LIPIKA** is a full-stack educational platform that uses **AI/ML to verify student handwriting authenticity**.  
-When a student submits an assignment, LIPIKA compares their handwriting against a stored reference  
-and generates a **similarity score** — helping teachers detect whether an assignment was genuinely written by the student.
+[![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 
 </div>
 
 ---
 
-## 🆕 Recent Updates
+## 🌟 Overview
 
-- **🚀 Smart Reference Onboarding**: Enhanced multi-image handwriting baseline collection during registration.
-- **📱 Fluid Dashboard Experience**: Refactored Student UI with full-screen subject views and organized assignment tracking.
-- **✅ Real-time Verification Feedback**: Clear visual indicators (🟢 Accepted / 🔴 Rejected) for student submissions.
-- **📚 Sem 6 Curated Subjects**: Integrated support for Software Testing, Information Security, Computer Networks, and FOSS.
+**LIPIKA** is a sophisticated, full-stack educational ecosystem engineered to uphold academic integrity through **Deep Learning Handwriting Analysis**. By leveraging state-of-the-art computer vision models, LIPIKA validates the authenticity of student submissions in real-time, providing educators with a robust tool to verify that every assignment is truly the student's own work.
+
+### 🎯 The Mission
+In an era of increasing digital shortcuts, LIPIKA preserves the value of handwritten academic work by providing a secure, automated, and highly accurate verification layer.
 
 ---
 
-## 📌 Key Features
+## ✨ Premium Features
 
-| Feature | Description |
-|---------|-------------|
-| 🧠 **Handwriting Verification** | Compares submissions against a student's reference handwriting using an ML model on Hugging Face |
-| 🔐 **Secure Authentication** | JWT-based login with bcrypt password hashing. Login via username or roll number |
-| 👥 **Role-Based Dashboards** | Three roles — **Student**, **Teacher**, **Admin** — each with dedicated dashboards |
-| 📁 **Smart Reference Archive** | Multi-image baseline collection with "No Limit" upload during onboarding |
-| 📊 **Teacher Review Panel** | Teachers view all submissions with similarity scores, match types, and accept/reject actions |
-| 🛡️ **Admin Control Panel** | Admins manage students and upload training data for the ML model |
+### 🎨 Modern UI/UX Experience
+- **Glassmorphic Design**: A sleek, modern interface utilizing high-end aesthetics, smooth transitions, and a curated color palette.
+- **Dynamic Dashboards**: Responsive, interactive portals for Students, Teachers, and Admins.
+- **Micro-interactions**: Powered by Framer Motion for a premium, "app-like" feel.
+
+### 🧠 Advanced AI Core
+- **Siamese Neural Networks**: Utilizes advanced comparison logic to generate precise similarity scores.
+- **Multi-Reference Baseline**: Collects multiple handwriting samples during onboarding for a more accurate "biometric" profile.
+- **Real-time Processing**: Fast inference via dedicated Hugging Face ML endpoints.
+
+### 🛡️ Enterprise-Grade Security
+- **JWT Authentication**: Secure, stateless session management.
+- **Bcrypt Hashing**: Industry-standard protection for user credentials.
+- **Role-Based Access (RBAC)**: Strict permission boundaries between academic roles.
+
+---
+
+## 🆕 What's New (Latest Updates)
+
+- **🚫 Zero-Demo Mode**: Completely removed all hardcoded demo data. The system now runs exclusively on real, user-created data.
+- **🔄 Full API Synchronization**: Dashboards are now 100% reactive to backend database changes.
+- **📊 Enhanced Analytics**: Teachers now get real-time stats on submission quality and match distributions.
+- **📁 Smart Reference Management**: Admins can now manage, update, and audit student handwriting references individually.
 
 ---
 
 ## 🏗️ System Architecture
 
-```
-┌─────────────────────┐         ┌─────────────────────┐         ┌──────────────────┐
-│                     │  REST   │                     │  SQL    │                  │
-│   React Frontend    │◄──────► │   FastAPI Backend    │◄──────► │  Neon PostgreSQL  │
-│   (Vite + TS)       │  API    │   (Python)          │         │  (Cloud DB)      │
-│                     │         │                     │         │                  │
-└─────────────────────┘         └────────┬────────────┘         └──────────────────┘
-                                         │
-                                         │ ML API Call
-                                         ▼
-                                ┌─────────────────────┐
-                                │  Hugging Face Space  │
-                                │  (thanoxz/ml-api)    │
-                                │  Handwriting Compare │
-                                └─────────────────────┘
+```mermaid
+graph TD
+    A[React Frontend] <-->|REST API| B[FastAPI Backend]
+    B <-->|SQL| C[PostgreSQL - Neon.tech]
+    B <-->|Gradio Client| D[ML Model - Hugging Face]
+    
+    subgraph "Frontend Layer"
+    A
+    end
+    
+    subgraph "Core Logic"
+    B
+    end
+    
+    subgraph "Data & Intelligence"
+    C
+    D
+    end
 ```
 
 ---
 
-## 🛠️ Technology Stack
+## 📂 Project Intelligence
 
-### Frontend
-
-| Technology | Purpose |
-|-----------|---------|
-| React 18 | UI framework |
-| Vite | Build tool & dev server |
-| TypeScript | Type safety |
-| Tailwind CSS | Styling |
-| shadcn/ui | Component library |
-| Framer Motion | Animations |
-| React Router | Page routing |
-
-### Backend
-
-| Technology | Purpose |
-|-----------|---------|
-| FastAPI | REST API framework |
-| SQLAlchemy | ORM for database |
-| Pydantic | Data validation |
-| python-jose | JWT token handling |
-| passlib + bcrypt | Password hashing |
-| Gradio Client | Hugging Face ML API calls |
-
-### Infrastructure
-
-| Service | Purpose |
-|---------|---------|
-| Render | Backend hosting |
-| Neon.tech | PostgreSQL cloud database |
-| Hugging Face Spaces | ML model hosting (`thanoxz/ml-api`) |
-
----
-
-## 📂 Project Structure
-
-```
+```bash
 LIPIKA/
-├── src/                           # Frontend (React + TypeScript)
-│   ├── pages/
-│   │   ├── LoginPage.tsx             # Login with username, password & role
-│   │   ├── CreateAccountPage.tsx     # Registration form
-│   │   ├── StudentDashboard.tsx      # Upload assignments, view scores
-│   │   ├── TeacherDashboard.tsx      # Review submissions & match results
-│   │   ├── AdminDashboard.tsx        # Manage students & training data
-│   │   └── UploadAssignmentPage.tsx  # Image upload interface
-│   ├── lib/
-│   │   └── api.ts                    # API client (all backend calls)
-│   └── components/                   # Reusable UI components
-│
-├── backend/                       # Backend (FastAPI + Python)
-│   ├── app/
-│   │   ├── main.py                   # API routes & app config
-│   │   ├── auth.py                   # JWT, bcrypt, login/signup logic
-│   │   ├── database.py               # Database connection (Neon.tech)
-│   │   ├── models.py                 # Database models (User, Assignment)
-│   │   ├── schemas.py                # Request/Response schemas
-│   │   └── dependencies.py           # Role-based access middleware
-│   ├── requirements.txt              # Python dependencies
-│   └── .env.example                  # Environment variable template
-│
-├── LIPIKA_Test_Cases.docx         # Test cases document
-├── package.json                   # Frontend dependencies
-└── README.md                      # This file
+├── src/                    # Frontend Architecture (React + TS)
+│   ├── pages/              # Logic-heavy dashboard views
+│   ├── lib/                # API client & core utilities
+│   └── components/         # Premium UI component library
+├── backend/                # Backend Architecture (FastAPI)
+│   ├── app/                # Core API logic & models
+│   │   ├── auth.py         # Security & JWT logic
+│   │   ├── main.py         # Endpoint routing
+│   │   └── models.py       # Database schema definitions
+└── training_data/          # Local storage for ML reference samples
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Deployment & Setup
 
-### Prerequisites
+### Requirements
+- **Node.js** (v18+)
+- **Python** (v3.9+)
+- **PostgreSQL** (Managed or Local)
 
-- **Node.js** v18+ → [Download](https://nodejs.org/)
-- **Python** 3.9+ → [Download](https://python.org/)
-- **Git** → [Download](https://git-scm.com/)
-
-### Step 1 — Clone the Repository
-
-```bash
-git clone https://github.com/ak0425906-star/LIPIKA.git
-cd LIPIKA
-```
-
-### Step 2 — Setup Frontend
-
-```bash
-npm install
-npm run dev
-```
-
-Frontend starts at → `http://localhost:5173`
-
-### Step 3 — Setup Backend
-
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-venv\Scripts\activate          # Windows
-# source venv/bin/activate     # Mac/Linux
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Setup environment variables
-copy .env.example .env         # Windows
-# cp .env.example .env         # Mac/Linux
-```
-
-Edit `backend/.env` with your credentials:
-
-```env
-DATABASE_URL=postgresql://user:password@your-neon-host/dbname?sslmode=require
-JWT_SECRET_KEY=your-secret-key-here
-```
-
-Start the backend:
-
-```bash
-uvicorn app.main:app --reload --port 8000
-```
-
-Backend starts at → `http://localhost:8000`
-
-> **Note:** The frontend is pre-configured to use the deployed backend at `https://thxanozz.onrender.com`. To use a local backend, update `API_BASE` in `src/lib/api.ts` to `http://localhost:8000`.
+### Quick Start
+1. **Clone & Install**:
+   ```bash
+   git clone https://github.com/ak0425906-star/LIPIKA.git
+   npm install
+   ```
+2. **Backend Config**:
+   Initialize a virtual environment in `/backend`, install `requirements.txt`, and configure your `.env` with `DATABASE_URL` and `JWT_SECRET_KEY`.
+3. **Launch**:
+   - Frontend: `npm run dev`
+   - Backend: `uvicorn app.main:app --reload`
 
 ---
 
-## 🔌 API Endpoints
+## 🧪 Verification Logic
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `GET` | `/` | — | Health check |
-| `POST` | `/signup` | — | Create new account |
-| `POST` | `/login` | — | Login & get JWT token |
-| `POST` | `/upload-assignment` | Student | Upload assignment for verification |
-| `GET` | `/teacher/assignments` | Teacher | View all student submissions |
-| `PUT` | `/teacher/assignments/{id}/review` | Teacher | Accept/reject a submission |
-| `GET` | `/admin/students` | Admin | List all students |
-| `POST` | `/admin/upload-training-by-roll/{roll}` | Admin | Upload training data |
+| Threshold | Status | Interpretation |
+|:---:|:---:|---|
+| **≥ 85%** | 🟢 **Strong** | Authenticated. High confidence of match. |
+| **60-84%** | 🟡 **Moderate** | Needs Review. Possible inconsistencies detected. |
+| **< 60%** | 🔴 **Weak** | Flagged. Handwriting profile does not match. |
 
 ---
 
-## 🔐 Authentication Flow
+## 📝 License & Attribution
 
-```
-User Signup → Password hashed (bcrypt) → Stored in PostgreSQL
-     ↓
-User Login → Credentials verified → JWT token issued (24hr expiry)
-     ↓
-API Request → Token sent in header → Role verified → Access granted/denied
-```
-
-- Users can log in with **username** or **roll number**
-- Passwords are **never stored in plain text**
-- Each API endpoint checks the user's **role** before granting access
+Built with passion for the academic community.  
+**Developer**: [ak0425906-star](https://github.com/ak0425906-star)
 
 ---
 
-## 🧠 How Handwriting Verification Works
-
-```
-Student's First Upload  →  Saved as Reference Sample (score = 100%)
-        ↓
-Next Upload  →  Compared against reference via ML Model (Hugging Face)
-        ↓
-Similarity Score Generated  →  Match Type Assigned
-```
-
-| Score | Match Type | Meaning |
-|-------|-----------|---------|
-| ≥ 85% | 🟢 **Strong Match** | Very likely the same person's handwriting |
-| 60–84% | 🟡 **Moderate Match** | Some similarities, needs manual review |
-| < 60% | 🔴 **Weak Match** | Likely a different person's handwriting |
-
----
-
-## 👥 User Roles
-
-### 🎓 Student
-- Upload assignment images for handwriting verification
+<div align="center">
+<b>LIPIKA — Verify. Authenticate. Trust.</b>
+</div>
 - View similarity scores and match history
 
 ### 🧑‍🏫 Teacher

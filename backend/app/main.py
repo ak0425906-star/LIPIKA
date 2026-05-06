@@ -137,7 +137,8 @@ def save_upload_file(upload_file: UploadFile, destination_folder: str) -> str:
 @app.post("/upload-assignment")
 async def upload_assignment(
     file: UploadFile = File(...),
-    assignment_id: str = Form(None), # Added as optional for Lovable compatibility
+    assignment_id: str = Form(None), 
+    subject_name: str = Form(None),
     db: Session = Depends(get_db),
     current_user = Depends(require_role("student"))
 ):
@@ -184,7 +185,8 @@ async def upload_assignment(
         image_path=file_path,
         is_reference=0,
         is_training=False,
-        similarity_score=similarity
+        similarity_score=similarity,
+        subject_name=subject_name
     )
 
     db.add(new_assignment)
@@ -235,15 +237,28 @@ async def upload_reference(
 # -----------------------------
 # TEACHER DASHBOARD
 # -----------------------------
+@app.get("/teacher/my-subjects")
+def get_teacher_subjects(
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("teacher"))
+):
+    return [s.name for s in current_user.subjects]
+
 @app.get("/teacher/assignments")
 def get_assignments(
     db: Session = Depends(get_db),
     current_user = Depends(require_role("teacher"))
 ):
-    # Join assignments with user data to show names in the dashboard
+    # Get teacher's assigned subjects
+    subject_names = [s.name for s in current_user.subjects]
+    
+    # Join assignments with user data and filter by subject
     query_result = db.query(models.Assignment, models.User).join(
         models.User, models.Assignment.student_username == models.User.username
-    ).filter(models.Assignment.is_reference == 0).all()
+    ).filter(
+        models.Assignment.is_reference == 0,
+        models.Assignment.subject_name.in_(subject_names) if subject_names else False
+    ).all()
 
     data_list = []
     for assignment, student in query_result:
@@ -251,13 +266,53 @@ def get_assignments(
             "id": assignment.id,
             "student_name": student.name,
             "roll_number": student.roll_number,
+            "subject_name": assignment.subject_name,
             "similarity": round(assignment.similarity_score, 2),
             "match_type": get_match_type(assignment.similarity_score),
             "date": assignment.created_at.strftime("%Y-%m-%d %H:%M") if assignment.created_at else "N/A",
-            "image_url": f"/{assignment.image_path}"
+            "image_url": f"/{assignment.image_path}",
+            "status": assignment.status,
+            "feedback": assignment.feedback
         })
 
     return {"data": data_list}
+
+# -----------------------------
+# STUDENT DASHBOARD ENDPOINTS
+# -----------------------------
+@app.get("/student/my-subjects")
+def get_student_subjects(
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("student"))
+):
+    # Return all subjects for the student's department
+    subjects = db.query(models.Subject).filter(models.Subject.department == current_user.department).all()
+    if not subjects:
+        # Fallback: if no department match, show all subjects
+        subjects = db.query(models.Subject).all()
+    return [{"id": s.id, "name": s.name} for s in subjects]
+
+@app.get("/student/my-assignments")
+def get_student_assignments(
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("student"))
+):
+    assignments = db.query(models.Assignment).filter(
+        models.Assignment.student_username == current_user.username,
+        models.Assignment.is_reference == 0
+    ).all()
+    
+    return [
+        {
+            "id": a.id,
+            "subject_name": a.subject_name,
+            "similarity": round(a.similarity_score, 2),
+            "status": a.status,
+            "date": a.created_at.strftime("%Y-%m-%d %H:%M") if a.created_at else "N/A",
+            "image_url": f"/{a.image_path}"
+        }
+        for a in assignments
+    ]
 
 # -----------------------------
 # TEACHER: REVIEW ASSIGNMENT
@@ -291,7 +346,7 @@ def review_assignment(
     }
 
 # -----------------------------
-# ADMIN: GET ALL STUDENTS
+# ADMIN: STUDENT MANAGEMENT
 # -----------------------------
 @app.get("/admin/students")
 def get_admin_students(
@@ -310,8 +365,212 @@ def get_admin_students(
         for s in students
     ]
 
+@app.delete("/admin/students/{username}")
+def delete_student(
+    username: str,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("admin"))
+):
+    student = db.query(models.User).filter(models.User.username == username, models.User.role == "student").first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    # Delete all assignments and references for this student
+    db.query(models.Assignment).filter(models.Assignment.student_username == username).delete()
+    
+    db.delete(student)
+    db.commit()
+    return {"message": f"Student {username} and all associated data deleted successfully"}
+
+@app.get("/admin/students/{username}/references")
+def get_student_references(
+    username: str,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("admin"))
+):
+    refs = db.query(models.Assignment).filter(
+        models.Assignment.student_username == username,
+        models.Assignment.is_reference == 1
+    ).order_by(models.Assignment.created_at.asc()).all()
+    
+    return [
+        {"id": r.id, "image_url": f"/{r.image_path}", "created_at": r.created_at}
+        for r in refs
+    ]
+
+@app.post("/admin/students/{username}/references")
+async def add_student_reference(
+    username: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("admin"))
+):
+    folder = os.path.join(TRAIN_DIR, f"student_{username}")
+    file_path = save_upload_file(file, folder)
+    
+    new_ref = models.Assignment(
+        student_username=username,
+        image_path=file_path,
+        is_reference=1,
+        is_training=True,
+        similarity_score=100.0
+    )
+    db.add(new_ref)
+    db.commit()
+    return {"message": "Reference added", "id": new_ref.id, "image_url": f"/{file_path}"}
+
+@app.put("/admin/students/{username}/references/{ref_id}")
+async def update_student_reference(
+    username: str,
+    ref_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("admin"))
+):
+    ref = db.query(models.Assignment).filter(
+        models.Assignment.id == ref_id,
+        models.Assignment.student_username == username
+    ).first()
+    
+    if not ref:
+        raise HTTPException(status_code=404, detail="Reference not found")
+        
+    # Save new file
+    folder = os.path.dirname(ref.image_path)
+    file_path = save_upload_file(file, folder)
+    
+    # Update path
+    ref.image_path = file_path
+    db.commit()
+    
+    return {"message": "Reference updated", "id": ref.id, "image_url": f"/{file_path}"}
+
+@app.delete("/admin/students/{username}/references/{ref_id}")
+def delete_student_reference(
+    username: str,
+    ref_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("admin"))
+):
+    ref = db.query(models.Assignment).filter(
+        models.Assignment.id == ref_id,
+        models.Assignment.student_username == username
+    ).first()
+    
+    if not ref:
+        raise HTTPException(status_code=404, detail="Reference not found")
+        
+    db.delete(ref)
+    db.commit()
+    return {"message": "Reference deleted"}
+
 # -----------------------------
-# ADMIN: UPLOAD TRAINING DATA
+# ADMIN: FACULTY MANAGEMENT
+# -----------------------------
+@app.get("/admin/teachers")
+def get_admin_teachers(
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("admin"))
+):
+    teachers = db.query(models.User).filter(models.User.role == "teacher").all()
+    return [
+        {
+            "username": t.username,
+            "name": t.name,
+            "department": t.department,
+            "subjects": [s.name for s in t.subjects]
+        }
+        for t in teachers
+    ]
+
+@app.delete("/admin/teachers/{username}")
+def delete_teacher(
+    username: str,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("admin"))
+):
+    teacher = db.query(models.User).filter(models.User.username == username, models.User.role == "teacher").first()
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    
+    # Delete all associated subjects
+    db.query(models.TeacherSubject).filter(models.TeacherSubject.teacher_username == username).delete()
+    
+    db.delete(teacher)
+    db.commit()
+    return {"message": f"Teacher {username} deleted successfully"}
+
+@app.get("/admin/subjects")
+def get_subjects(
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("admin"))
+):
+    subjects = db.query(models.Subject).all()
+    return subjects
+
+@app.post("/admin/subjects")
+def create_subject(
+    subj: schemas.SubjectCreate,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("admin"))
+):
+    db_subj = models.Subject(name=subj.name, department=subj.department)
+    db.add(db_subj)
+    try:
+        db.commit()
+        db.refresh(db_subj)
+    except:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Subject already exists")
+    return db_subj
+
+@app.delete("/admin/subjects/{subject_id}")
+def delete_subject(
+    subject_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("admin"))
+):
+    print(f"DEBUG: Delete subject request for ID: {subject_id}")
+    subject = db.query(models.Subject).filter(models.Subject.id == subject_id).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+    
+    # Also delete associations in teacher_subjects
+    db.query(models.TeacherSubject).filter(models.TeacherSubject.subject_id == subject_id).delete()
+    
+    db.delete(subject)
+    db.commit()
+    return {"message": "Subject deleted successfully"}
+
+@app.post("/admin/teachers/assign-subjects")
+def assign_subjects(
+    update_data: schemas.TeacherSubjectUpdate,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("admin"))
+):
+    teacher = db.query(models.User).filter(
+        models.User.username == update_data.teacher_username,
+        models.User.role == "teacher"
+    ).first()
+    
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+        
+    # Clear existing subjects
+    db.query(models.TeacherSubject).filter(
+        models.TeacherSubject.teacher_username == teacher.username
+    ).delete()
+    
+    # Assign new subjects
+    for sid in update_data.subject_ids:
+        new_mapping = models.TeacherSubject(teacher_username=teacher.username, subject_id=sid)
+        db.add(new_mapping)
+        
+    db.commit()
+    return {"message": "Subjects assigned successfully"}
+
+# -----------------------------
+# ADMIN: UPLOAD TRAINING DATA (Legacy compat)
 # -----------------------------
 @app.post("/admin/upload-training-by-roll/{roll_number}")
 def upload_training_by_roll(

@@ -67,7 +67,9 @@ async function apiFetch(path: string, options: RequestInit = {}) {
   if (options.body && !(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
+  console.log(`[API] ${options.method || "GET"} ${path}`, options.body ? "(with body)" : "");
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  console.log(`[API] Response from ${path}: ${res.status} ${res.statusText}`);
   if (!res.ok) {
     let errorMessage = res.statusText;
     try {
@@ -142,13 +144,96 @@ export async function uploadReference(files: File[]): Promise<unknown> {
   });
 }
 
-export async function getTeacherAssignments(): Promise<unknown> {
+export async function getTeacherAssignments(): Promise<any> {
   return apiFetch("/teacher/assignments");
+}
+
+export async function getStudentSubjects(): Promise<{ id: number; name: string }[]> {
+  return apiFetch("/student/my-subjects");
+}
+
+export async function getStudentAssignments(): Promise<{
+  id: number;
+  subject_name: string;
+  similarity: number;
+  status: string;
+  date: string;
+  image_url: string;
+}[]> {
+  return apiFetch("/student/my-assignments");
 }
 
 // Admin
 export async function getAdminStudents(): Promise<UserOut[]> {
   return apiFetch("/admin/students");
+}
+
+export async function getStudentReferences(username: string): Promise<{ id: number; image_url: string }[]> {
+  return apiFetch(`/admin/students/${username}/references`);
+}
+
+export async function addStudentReference(username: string, file: File): Promise<unknown> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch(`/admin/students/${username}/references`, {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function deleteStudentReference(username: string, refId: number): Promise<unknown> {
+  return apiFetch(`/admin/students/${username}/references/${refId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function deleteAdminStudent(username: string): Promise<unknown> {
+  return apiFetch(`/admin/students/${username}`, {
+    method: "DELETE",
+  });
+}
+
+export async function updateStudentReference(username: string, refId: number, file: File): Promise<unknown> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch(`/admin/students/${username}/references/${refId}`, {
+    method: "PUT",
+    body: formData,
+  });
+}
+
+export async function getAdminTeachers(): Promise<{ username: string; name: string; department: string; subjects: string[] }[]> {
+  return apiFetch("/admin/teachers");
+}
+
+export async function deleteAdminTeacher(username: string): Promise<unknown> {
+  return apiFetch(`/admin/teachers/${username}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getAdminSubjects(): Promise<{ id: number; name: string; department: string }[]> {
+  return apiFetch("/admin/subjects");
+}
+
+export async function createAdminSubject(name: string, department: string): Promise<unknown> {
+  return apiFetch("/admin/subjects", {
+    method: "POST",
+    body: JSON.stringify({ name, department }),
+  });
+}
+
+export async function deleteAdminSubject(subjectId: number): Promise<unknown> {
+  return apiFetch(`/admin/subjects/${subjectId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function assignTeacherSubjects(teacherUsername: string, subjectIds: number[]): Promise<unknown> {
+  return apiFetch("/admin/teachers/assign-subjects", {
+    method: "POST",
+    body: JSON.stringify({ teacher_username: teacherUsername, subject_ids: subjectIds }),
+  });
 }
 
 export async function adminUploadTrainingByRoll(rollNumber: string, file: File): Promise<unknown> {

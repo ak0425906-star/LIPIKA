@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
-import { getCurrentUser, isAuthenticated, logout, uploadAssignment } from "@/lib/api";
+import { getCurrentUser, isAuthenticated, logout, uploadAssignment, getStudentSubjects, getStudentAssignments } from "@/lib/api";
 
 interface Assignment {
   name: string;
@@ -59,62 +59,42 @@ const StudentDashboard = () => {
     setFullName(user.name || "Student");
     setDepartment(user.department || "");
 
-    // Populate subjects for Semester 6 specifically for students
-    if (semester === "6") {
-      setSubjects([
-        {
-          name: "Software Testing",
-          assignments: [
-            {
-              name: "Unit Testing Lab",
-              description: "Implement JUnit tests for the provided Java classes.",
-              dueDate: "2026-05-15",
-              status: "Pending",
-              teacher: "Dr. Smith"
-            }
-          ]
-        },
-        {
-          name: "Information Security",
-          assignments: [
-            {
-              name: "RSA Algorithm Implementation",
-              description: "Write a Python script to demonstrate RSA encryption and decryption.",
-              dueDate: "2026-05-20",
-              status: "Pending",
-              teacher: "Prof. Johnson"
-            }
-          ]
-        },
-        {
-          name: "Computer Networks",
-          assignments: [
-            {
-              name: "TCP/UDP Socket Programming",
-              description: "Create a simple chat application using TCP sockets.",
-              dueDate: "2026-05-18",
-              status: "Pending",
-              teacher: "Dr. Williams"
-            }
-          ]
-        },
-        {
-          name: "Free and Open Source",
-          assignments: [
-            {
-              name: "Git Flow Exercise",
-              description: "Demonstrate branching, merging, and pull request workflows on GitHub.",
-              dueDate: "2026-05-25",
-              status: "Pending",
-              teacher: "Prof. Davis"
-            }
-          ]
-        }
-      ]);
-    } else {
-      setSubjects([]);
-    }
-  }, [navigate, semester]);
+    const loadData = async () => {
+      try {
+        const [apiSubjects, apiAssignments] = await Promise.all([
+          getStudentSubjects(),
+          getStudentAssignments()
+        ]);
+
+        // Transform and group assignments by subject
+        const formattedSubjects: Subject[] = apiSubjects.map(subj => {
+          const assignments = apiAssignments
+            .filter(a => a.subject_name === subj.name)
+            .map(a => ({
+              name: a.subject_name || "Assignment",
+              description: "Uploaded handwriting assignment", // Generic as backend doesn't store descriptions yet
+              dueDate: a.date.split(" ")[0],
+              status: (a.status.toLowerCase() === "pending" ? "Pending" : "Completed") as "Pending" | "Completed",
+              verificationStatus: a.status.toLowerCase() as "pending" | "accepted" | "rejected",
+              teacher: "Assigned Teacher",
+              matchPercent: a.similarity,
+              uploadedImages: [a.image_url]
+            }));
+
+          return {
+            name: subj.name,
+            assignments: assignments
+          };
+        });
+
+        setSubjects(formattedSubjects);
+      } catch (err) {
+        console.error("Failed to load student data", err);
+      }
+    };
+
+    loadData();
+  }, [navigate]);
 
   const handleLogout = async () => {
     await logout();
