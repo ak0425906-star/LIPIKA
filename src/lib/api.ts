@@ -148,6 +148,10 @@ export async function getTeacherAssignments(): Promise<any> {
   return apiFetch("/teacher/assignments");
 }
 
+export async function getTeacherSubjects(): Promise<string[]> {
+  return apiFetch("/teacher/my-subjects");
+}
+
 export async function getStudentSubjects(): Promise<{ id: number; name: string }[]> {
   return apiFetch("/student/my-subjects");
 }

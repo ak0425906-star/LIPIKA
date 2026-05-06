@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
-import { getCurrentUser, isAuthenticated, logout, getTeacherAssignments } from "@/lib/api";
+import { getCurrentUser, isAuthenticated, logout, getTeacherAssignments, getTeacherSubjects } from "@/lib/api";
 
 // Types
 interface StudentSubmission {
@@ -171,14 +171,31 @@ const TeacherDashboard = () => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const response = await getTeacherAssignments();
-        const data = response.data || [];
+        const [assignmentsRes, subjectsRes] = await Promise.all([
+          getTeacherAssignments(),
+          getTeacherSubjects()
+        ]);
+
+        const submissions = assignmentsRes.data || [];
+        const assignedSubjects = subjectsRes || [];
         
         // Group by subject
         const subjectsMap: Record<string, SubjectData> = {};
         
-        data.forEach((sub: any) => {
+        // Initialize map with all assigned subjects
+        assignedSubjects.forEach(sName => {
+          subjectsMap[sName] = {
+            name: sName,
+            assignments: [],
+            submissions: [],
+            allStudentIds: []
+          };
+        });
+
+        submissions.forEach((sub: any) => {
           const sName = sub.subject_name || "Unassigned";
+          
+          // Ensure subject exists in map (it should if assigned, but fallback for safety)
           if (!subjectsMap[sName]) {
             subjectsMap[sName] = {
               name: sName,
@@ -194,7 +211,7 @@ const TeacherDashboard = () => {
             studentName: sub.student_name || "N/A",
             assignmentName: sub.subject_name || "Assignment",
             dateSubmitted: sub.date.split(" ")[0],
-            dueDate: sub.date.split(" ")[0], // Mock due date as same as submission date for now
+            dueDate: sub.date.split(" ")[0], 
             matchPercent: sub.similarity,
             uploadedImages: [sub.image_url],
             status: sub.status as "pending" | "accepted" | "rejected"
@@ -218,9 +235,12 @@ const TeacherDashboard = () => {
         setSubjectsData(formattedData);
         
         if (formattedData.length > 0) {
-          setSelectedSubject(formattedData[0].name);
-          if (formattedData[0].assignments.length > 0) {
-            setSelectedAssignment(formattedData[0].assignments[0].name);
+          // Keep current selection if valid, else pick first
+          if (!selectedSubject || !subjectsMap[selectedSubject]) {
+            setSelectedSubject(formattedData[0].name);
+            if (formattedData[0].assignments.length > 0) {
+              setSelectedAssignment(formattedData[0].assignments[0].name);
+            }
           }
         }
       } catch (err) {
