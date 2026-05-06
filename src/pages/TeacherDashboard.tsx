@@ -48,19 +48,36 @@ const isLateSubmission = (submittedDate: string, dueDate: string): boolean => {
   return new Date(submittedDate) > new Date(dueDate);
 };
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 // Components
-const AddAssignmentDialog = ({ open, onClose, onAdd }: {
+const AddAssignmentDialog = ({ open, onClose, onAdd, subjects, defaultSubject }: {
   open: boolean;
   onClose: () => void;
-  onAdd: (a: AssignmentDef) => void;
+  onAdd: (a: AssignmentDef, subjectName: string) => void;
+  subjects: string[];
+  defaultSubject: string;
 }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [selectedSub, setSelectedSub] = useState(defaultSubject);
+
+  useEffect(() => {
+    if (open) {
+      setSelectedSub(defaultSubject);
+    }
+  }, [open, defaultSubject]);
 
   const handleSubmit = () => {
-    if (!name || !dueDate) return;
-    onAdd({ name, description, dueDate });
+    if (!name || !dueDate || !selectedSub) return;
+    onAdd({ name, description, dueDate }, selectedSub);
     setName(""); setDescription(""); setDueDate("");
     onClose();
   };
@@ -72,6 +89,21 @@ const AddAssignmentDialog = ({ open, onClose, onAdd }: {
           <DialogTitle className="text-foreground">Add New Assignment</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-4 pt-2">
+          {subjects.length > 1 && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-foreground">Select Subject</Label>
+              <Select value={selectedSub} onValueChange={setSelectedSub}>
+                <SelectTrigger className="rounded-xl bg-secondary/50 border-0">
+                  <SelectValue placeholder="Choose a subject" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {subjects.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-2">
             <Label className="text-sm font-medium text-foreground">Assignment Name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter assignment name" className="rounded-xl bg-secondary/50 border-0" />
@@ -84,7 +116,7 @@ const AddAssignmentDialog = ({ open, onClose, onAdd }: {
             <Label className="text-sm font-medium text-foreground">Submission Date</Label>
             <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="rounded-xl bg-secondary/50 border-0" />
           </div>
-          <Button onClick={handleSubmit} disabled={!name || !dueDate} className="rounded-xl">
+          <Button onClick={handleSubmit} disabled={!name || !dueDate || !selectedSub} className="rounded-xl">
             <Plus className="h-4 w-4 mr-2" /> Create Assignment
           </Button>
         </div>
@@ -258,9 +290,8 @@ const TeacherDashboard = () => {
     navigate("/");
   };
 
-  const handleAddAssignment = (assignment: AssignmentDef) => {
-    if (!addForSubject) return;
-    setSubjectsData((prev) => prev.map((s) => s.name === addForSubject ? { ...s, assignments: [...s.assignments, assignment] } : s));
+  const handleAddAssignment = (assignment: AssignmentDef, subjectName: string) => {
+    setSubjectsData((prev) => prev.map((s) => s.name === subjectName ? { ...s, assignments: [...s.assignments, assignment] } : s));
   };
 
   const handleAcceptReject = (studentId: string, assignmentName: string, newStatus: "accepted" | "rejected") => {
@@ -580,7 +611,13 @@ const TeacherDashboard = () => {
         </AnimatePresence>
       </div>
 
-      <AddAssignmentDialog open={showAddDialog} onClose={() => setShowAddDialog(false)} onAdd={handleAddAssignment} />
+      <AddAssignmentDialog 
+        open={showAddDialog} 
+        onClose={() => setShowAddDialog(false)} 
+        onAdd={handleAddAssignment} 
+        subjects={subjectsData.map(s => s.name)}
+        defaultSubject={selectedSubject || ""}
+      />
       {viewStudent && <ImageCarouselDialog open={!!viewStudent} onClose={() => setViewStudent(null)} studentName={viewStudent.name} images={viewStudent.images} />}
     </div>
   );
