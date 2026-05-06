@@ -95,7 +95,37 @@ LIPIKA/
 
 ---
 
-## 🚀 Deployment & Setup
+## 👥 Specialized User Portals
+
+### 🎓 Student Dashboard
+* **Dynamic Submissions**: Securely upload handwriting samples for immediate AI verification.
+* **Integrity Tracking**: Monitor similarity scores and verification history over time.
+* **Subject Focus**: View and manage assignments organized by specific academic subjects.
+
+### 🧑‍🏫 Faculty Portal
+* **Review Command Center**: Comprehensive view of all student submissions with automated AI tagging.
+* **Actionable Insights**: One-click Accept/Reject functionality with match confidence levels.
+* **Data Visualization**: Real-time distribution of Strong, Moderate, and Weak matches across the class.
+
+### 🛡️ System Administration
+* **Enrollment Management**: Full control over student and teacher profiles.
+* **Baseline Auditing**: Directly manage and update the handwriting reference data used by the AI model.
+* **Global Configuration**: Manage subjects, departments, and system-wide settings.
+
+---
+
+## 🌐 Infrastructure & Deployment
+
+| Component | Technology | Hosting |
+|-----------|------------|---------|
+| **Frontend** | React + Vite | Vercel / Static |
+| **Backend** | FastAPI | [Render](https://render.com) |
+| **Intelligence** | Hugging Face | [Spaces](https://huggingface.co/spaces) |
+| **Persistence** | PostgreSQL | [Neon.tech](https://neon.tech) |
+
+---
+
+## 🚀 Deployment & Local Setup
 
 ### Requirements
 - **Node.js** (v18+)
@@ -129,45 +159,11 @@ LIPIKA/
 ## 📝 License & Attribution
 
 Built with passion for the academic community.  
-**Developer**: [ak0425906-star](https://github.com/ak0425906-star)
+**Lead Developer**: [ak0425906-star](https://github.com/ak0425906-star)
 
 ---
 
 <div align="center">
-<b>LIPIKA — Verify. Authenticate. Trust.</b>
-</div>
-- View similarity scores and match history
-
-### 🧑‍🏫 Teacher
-- View all student submissions with similarity scores
-- Accept or reject assignments based on match results
-- Filter by Strong / Moderate / Weak matches
-
-### 🛡️ Admin
-- View all registered students
-- Upload reference handwriting data for any student
-- Full system management access
-
----
-
-## 🌐 Deployment
-
-| Component | Hosted On |
-|-----------|-----------|
-| Backend API | [Render](https://render.com) — `https://thxanozz.onrender.com` |
-| Database | [Neon.tech](https://neon.tech) — PostgreSQL |
-| ML Model | [Hugging Face](https://huggingface.co/spaces) — `thanoxz/ml-api` |
-
----
-
-## 📝 License
-
-This project is built for educational purposes.
-
----
-
-<div align="center">
-
-**Built with ❤️ by [ak0425906-star](https://github.com/ak0425906-star)**
-
+<b>LIPIKA — Verify. Authenticate. Trust.</b><br>
+Built with ❤️ for a more transparent academic future.
 </div>
