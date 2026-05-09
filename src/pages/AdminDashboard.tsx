@@ -59,6 +59,8 @@ const AdminDashboard = () => {
   // Selection states
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [studentRefs, setStudentRefs] = useState<{ id: number; image_url: string }[]>([]);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isUploadingRef, setIsUploadingRef] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<TeacherData | null>(null);
   const [showSubjectDialog, setShowSubjectDialog] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState("");
@@ -121,13 +123,27 @@ const AdminDashboard = () => {
   };
 
   const handleAddReference = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!selectedStudent || !e.target.files?.[0]) return;
+    if (!selectedStudent || !e.target.files || e.target.files.length === 0) return;
+    
+    setIsUploadingRef(true);
+    const files = Array.from(e.target.files);
+    
     try {
-      await addStudentReference(selectedStudent.username, e.target.files[0]);
+      // Process each file
+      for (const file of files) {
+        await addStudentReference(selectedStudent.username, file);
+      }
+      
       const refs = await getStudentReferences(selectedStudent.username);
       setStudentRefs(refs);
+      toast.success(`Successfully added ${files.length} reference(s)`);
     } catch (error) {
       console.error("Failed to add reference", error);
+      toast.error("Failed to upload references");
+    } finally {
+      setIsUploadingRef(false);
+      // Reset input
+      e.target.value = "";
     }
   };
 
@@ -408,17 +424,33 @@ const AdminDashboard = () => {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em]">Training References</h3>
-                  <label className="cursor-pointer">
-                    <input type="file" className="hidden" onChange={handleAddReference} />
+                  <label className={`cursor-pointer ${isUploadingRef ? "opacity-50 pointer-events-none" : ""}`}>
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      multiple 
+                      accept="image/*"
+                      onChange={handleAddReference} 
+                      disabled={isUploadingRef}
+                    />
                     <div className="h-10 px-4 rounded-xl bg-indigo-500 text-white flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 hover:scale-105 transition-all text-[10px] font-black uppercase">
-                      <Upload className="h-4 w-4" /> Add Reference
+                      {isUploadingRef ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4" />
+                      )}
+                      {isUploadingRef ? "Uploading..." : "Add Reference"}
                     </div>
                   </label>
                 </div>
                 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {studentRefs.length > 0 ? studentRefs.map((ref, ri) => (
-                    <div key={ri} className="relative group rounded-2xl overflow-hidden aspect-square bg-slate-50 border border-slate-100 shadow-sm">
+                    <div 
+                      key={ri} 
+                      className="relative group rounded-2xl overflow-hidden aspect-square bg-slate-50 border border-slate-100 shadow-sm cursor-pointer"
+                      onClick={() => setPreviewImage(ref.image_url)}
+                    >
                       <img src={ref.image_url} alt="Ref" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                       {ri === 0 && (
                         <div className="absolute top-3 left-3 px-2 py-1 bg-indigo-600 text-white text-[8px] font-black uppercase rounded-lg shadow-xl z-10 border border-white/20 backdrop-blur-sm">
@@ -563,6 +595,33 @@ const AdminDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Image Preview Pop-up */}
+      <AnimatePresence>
+        {previewImage && (
+          <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
+            <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-transparent border-0 shadow-none flex items-center justify-center">
+            <div className="relative group w-full h-full">
+              <div className="absolute inset-0 overflow-y-auto p-4 flex flex-col items-center">
+                <motion.img 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  src={previewImage} 
+                  alt="Full preview" 
+                  className="w-full h-auto max-w-4xl shadow-2xl bg-white p-1" 
+                />
+              </div>
+              <Button 
+                onClick={() => setPreviewImage(null)}
+                className="absolute top-4 right-4 h-12 w-12 rounded-full bg-black/60 hover:bg-black/80 text-white border-0 backdrop-blur-md z-50"
+              >
+                <X className="h-6 w-6" />
+              </Button>
+            </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

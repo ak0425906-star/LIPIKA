@@ -48,3 +48,21 @@ class SubjectOut(SubjectBase):
 class TeacherSubjectUpdate(BaseModel):
     teacher_username: str
     subject_ids: list[int]
+
+# -----------------------------
+# TASK SCHEMAS
+# -----------------------------
+
+class TaskBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    due_date: str
+    subject_name: str
+
+class TaskCreate(TaskBase):
+    pass
+
+class TaskOut(TaskBase):
+    id: int
+    teacher_username: str
+    model_config = ConfigDict(from_attributes=True)

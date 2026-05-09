@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
-import { getCurrentUser, isAuthenticated, logout, getTeacherAssignments, getTeacherSubjects } from "@/lib/api";
+import { getCurrentUser, isAuthenticated, logout, getTeacherAssignments, getTeacherSubjects, getTeacherTasks, createTeacherTask, deleteTeacherTask, reviewAssignment } from "@/lib/api";
 
 // Types
 interface StudentSubmission {
+  id: number;
   studentId: string;
   studentName: string;
   assignmentName: string;
@@ -23,6 +24,7 @@ interface StudentSubmission {
 }
 
 interface AssignmentDef {
+  id?: number;
   name: string;
   description: string;
   dueDate: string;
@@ -38,10 +40,10 @@ interface SubjectData {
 type FilterType = "all" | "strong" | "moderate" | "weak" | "not-submitted" | "submitted" | "rejected";
 
 // Helpers
-const getMatchStatus = (percent: number): { label: string; color: string } => {
-  if (percent > 74) return { label: "Strong Match", color: "text-emerald-500" };
-  if (percent >= 50) return { label: "Moderate Match", color: "text-amber-500" };
-  return { label: "Weak Match", color: "text-red-500" };
+const getMatchStatus = (percent: number): { label: string; color: string; interpretation: string } => {
+  if (percent >= 85) return { label: "Strong Match", color: "text-emerald-500", interpretation: "Authenticated" };
+  if (percent >= 60) return { label: "Moderate Match", color: "text-amber-500", interpretation: "Needs Review" };
+  return { label: "Weak Match", color: "text-red-500", interpretation: "Flagged" };
 };
 
 const isLateSubmission = (submittedDate: string, dueDate: string): boolean => {
@@ -138,42 +140,58 @@ const ImageCarouselDialog = ({ open, onClose, studentName, images }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl bg-card border-border max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-foreground">{studentName} — Uploaded Assignment</DialogTitle>
-        </DialogHeader>
-        {images.length > 0 ? (
-          <div className="flex flex-col items-center gap-4 pt-2">
-            <div className="relative w-full flex items-center justify-center">
+      <DialogContent className="max-w-5xl bg-slate-900/95 backdrop-blur-xl border-white/10 p-0 overflow-hidden rounded-[2rem] shadow-2xl">
+        <div className="relative w-full h-[85vh] flex flex-col">
+          <div className="p-6 flex items-center justify-between border-b border-white/5">
+            <DialogTitle className="text-xl font-black text-white uppercase tracking-tight">{studentName} — Submissions</DialogTitle>
+            <div className="flex items-center gap-4">
               {images.length > 1 && (
-                <Button variant="ghost" size="icon" onClick={goPrev} disabled={currentIndex === 0} className="absolute left-0 z-10">
-                  <ChevronLeft className="h-6 w-6" />
-                </Button>
+                <span className="px-3 py-1 bg-white/10 rounded-lg text-[10px] font-black text-white/50 uppercase tracking-widest">
+                  {currentIndex + 1} / {images.length}
+                </span>
               )}
-              <img src={images[currentIndex]} alt={`Page ${currentIndex + 1}`} className="max-h-[60vh] w-auto rounded-lg object-contain border border-border" />
-              {images.length > 1 && (
-                <Button variant="ghost" size="icon" onClick={goNext} disabled={currentIndex === images.length - 1} className="absolute right-0 z-10">
-                  <ChevronRight className="h-6 w-6" />
-                </Button>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">Page {currentIndex + 1} of {images.length}</p>
-            {/* Thumbnail strip */}
-            <div className="flex gap-2 overflow-x-auto max-w-full pb-2">
-              {images.map((src, i) => (
-                <img
-                  key={i}
-                  src={src}
-                  alt={`Thumb ${i + 1}`}
-                  className={`h-14 w-14 rounded-lg object-cover cursor-pointer border-2 transition-all ${i === currentIndex ? "border-primary" : "border-transparent opacity-60 hover:opacity-100"}`}
-                  onClick={() => setCurrentIndex(i)}
-                />
-              ))}
+              <Button variant="ghost" size="icon" onClick={onClose} className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 text-white">
+                <X className="h-5 w-5" />
+              </Button>
             </div>
           </div>
-        ) : (
-          <p className="text-center text-muted-foreground py-8">No images uploaded.</p>
-        )}
+          
+          <div className="flex-1 relative group">
+            <div className="absolute inset-0 overflow-y-auto p-4 flex flex-col items-center">
+              <motion.img 
+                key={currentIndex}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                src={images[currentIndex]} 
+                alt={`Page ${currentIndex + 1}`} 
+                className="w-full h-auto max-w-4xl shadow-2xl ring-1 ring-white/10" 
+              />
+            </div>
+
+            {images.length > 1 && (
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={goPrev} 
+                  disabled={currentIndex === 0} 
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 h-14 w-14 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/10 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                >
+                  <ChevronLeft className="h-8 w-8" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={goNext} 
+                  disabled={currentIndex === images.length - 1} 
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 h-14 w-14 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/10 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                >
+                  <ChevronRight className="h-8 w-8" />
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -182,6 +200,8 @@ const TeacherDashboard = () => {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("Teacher");
   const [department, setDepartment] = useState("");
+  const [expandedSubmission, setExpandedSubmission] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
@@ -203,13 +223,15 @@ const TeacherDashboard = () => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [assignmentsRes, subjectsRes] = await Promise.all([
+        const [assignmentsRes, subjectsRes, tasksRes] = await Promise.all([
           getTeacherAssignments(),
-          getTeacherSubjects()
+          getTeacherSubjects(),
+          getTeacherTasks()
         ]);
 
         const submissions = assignmentsRes.data || [];
         const assignedSubjects = subjectsRes || [];
+        const allTasks = tasksRes || [];
         
         // Group by subject
         const subjectsMap: Record<string, SubjectData> = {};
@@ -224,10 +246,22 @@ const TeacherDashboard = () => {
           };
         });
 
+        // Add real tasks to subjects
+        allTasks.forEach((t: any) => {
+          const sName = t.subject_name;
+          if (subjectsMap[sName]) {
+            subjectsMap[sName].assignments.push({
+              id: t.id,
+              name: t.name,
+              description: t.description || "",
+              dueDate: t.due_date
+            });
+          }
+        });
+
         submissions.forEach((sub: any) => {
           const sName = sub.subject_name || "Unassigned";
           
-          // Ensure subject exists in map (it should if assigned, but fallback for safety)
           if (!subjectsMap[sName]) {
             subjectsMap[sName] = {
               name: sName,
@@ -237,11 +271,14 @@ const TeacherDashboard = () => {
             };
           }
           
+          const taskName = sub.task_name || sub.subject_name || "Assignment";
+
           // Add to submissions
           subjectsMap[sName].submissions.push({
+            id: sub.id,
             studentId: sub.roll_number || "N/A",
             studentName: sub.student_name || "N/A",
-            assignmentName: sub.subject_name || "Assignment",
+            assignmentName: taskName,
             dateSubmitted: sub.date.split(" ")[0],
             dueDate: sub.date.split(" ")[0], 
             matchPercent: sub.similarity,
@@ -253,11 +290,11 @@ const TeacherDashboard = () => {
             subjectsMap[sName].allStudentIds.push(sub.roll_number);
           }
 
-          // Create assignment def if not exists
-          if (!subjectsMap[sName].assignments.find(a => a.name === (sub.subject_name || "Assignment"))) {
+          // Fallback: If task doesn't exist in assignments list, add it (for old data)
+          if (!subjectsMap[sName].assignments.find(a => a.name === taskName)) {
             subjectsMap[sName].assignments.push({
-              name: sub.subject_name || "Assignment",
-              description: "Student submission",
+              name: taskName,
+              description: "Legacy submission",
               dueDate: sub.date.split(" ")[0]
             });
           }
@@ -267,12 +304,24 @@ const TeacherDashboard = () => {
         setSubjectsData(formattedData);
         
         if (formattedData.length > 0) {
-          // Keep current selection if valid, else pick first
-          if (!selectedSubject || !subjectsMap[selectedSubject]) {
-            setSelectedSubject(formattedData[0].name);
-            if (formattedData[0].assignments.length > 0) {
-              setSelectedAssignment(formattedData[0].assignments[0].name);
+          // 1. Determine Subject
+          let targetSub = formattedData[0];
+          if (selectedSubject) {
+            const found = formattedData.find(s => s.name === selectedSubject);
+            if (found) targetSub = found;
+          }
+          
+          if (selectedSubject !== targetSub.name) {
+            setSelectedSubject(targetSub.name);
+          }
+
+          // 2. Determine Assignment/Task
+          if (targetSub.assignments.length > 0) {
+            if (!selectedAssignment || !targetSub.assignments.find(a => a.name === selectedAssignment)) {
+              setSelectedAssignment(targetSub.assignments[0].name);
             }
+          } else {
+            setSelectedAssignment(null);
           }
         }
       } catch (err) {
@@ -290,22 +339,49 @@ const TeacherDashboard = () => {
     navigate("/");
   };
 
-  const handleAddAssignment = (assignment: AssignmentDef, subjectName: string) => {
-    setSubjectsData((prev) => prev.map((s) => s.name === subjectName ? { ...s, assignments: [...s.assignments, assignment] } : s));
+  const handleAddAssignment = async (assignment: AssignmentDef, subjectName: string) => {
+    try {
+      await createTeacherTask({
+        name: assignment.name,
+        description: assignment.description,
+        due_date: assignment.dueDate,
+        subject_name: subjectName
+      });
+      // Refresh all data to get the new task and updated lists
+      window.location.reload(); 
+    } catch (err) {
+      console.error("Failed to create task", err);
+      alert("Failed to create task: " + err);
+    }
   };
 
-  const handleAcceptReject = (studentId: string, assignmentName: string, newStatus: "accepted" | "rejected") => {
-    setSubjectsData((prev) =>
-      prev.map((s) => ({
-        ...s,
-        submissions: s.submissions.map((sub) =>
-          sub.studentId === studentId && sub.assignmentName === assignmentName
-            ? { ...sub, status: newStatus }
-            : sub
-        ),
-      }))
-    );
+
+  /**
+   * Submits a review (Accept/Reject) for a specific assignment to the backend
+   * and updates the local dashboard state.
+   */
+  const handleAcceptReject = async (assignmentId: number, newStatus: "accepted" | "rejected") => {
+    try {
+      // 1. Persist the change to the backend database
+      await reviewAssignment(assignmentId, newStatus);
+      
+      // 2. Update the UI state to reflect the new status immediately
+      setSubjectsData((prevData) =>
+        prevData.map((subject) => ({
+          ...subject,
+          submissions: subject.submissions.map((sub) =>
+            sub.id === assignmentId ? { ...sub, status: newStatus } : sub
+          ),
+        }))
+      );
+      
+      console.log(`Successfully updated assignment ${assignmentId} to ${newStatus}`);
+    } catch (err) {
+      console.error("Critical failure during assignment review:", err);
+      alert("System Error: Could not synchronize review status with the server.");
+    }
   };
+
 
   const activeSubjectData = subjectsData.find((s) => s.name === selectedSubject);
   const assignmentSubmissions = useMemo(() => {
@@ -320,9 +396,9 @@ const TeacherDashboard = () => {
     if (!selectedAssignment || !activeSubjectData) return { totalSubmissions: 0, strong: 0, moderate: 0, weak: 0, pending: 0 };
     const submitted = assignmentSubmissions;
     const totalSubmissions = submitted.length;
-    const strong = submitted.filter(s => s.matchPercent > 74).length;
-    const moderate = submitted.filter(s => s.matchPercent >= 50 && s.matchPercent <= 74).length;
-    const weak = submitted.filter(s => s.matchPercent < 50).length;
+    const strong = submitted.filter(s => s.matchPercent >= 85).length;
+    const moderate = submitted.filter(s => s.matchPercent >= 60 && s.matchPercent < 85).length;
+    const weak = submitted.filter(s => s.matchPercent < 60).length;
     
     const submittedIds = new Set(submitted.map(s => s.studentId));
     const pending = activeSubjectData.allStudentIds.filter(id => !submittedIds.has(id)).length;
@@ -332,9 +408,9 @@ const TeacherDashboard = () => {
 
   const filteredSubmissions = useMemo(() => {
     let list = assignmentSubmissions;
-    if (filter === "strong") list = list.filter((s) => s.matchPercent > 74);
-    else if (filter === "moderate") list = list.filter((s) => s.matchPercent >= 50 && s.matchPercent <= 74);
-    else if (filter === "weak") list = list.filter((s) => s.matchPercent < 50);
+    if (filter === "strong") list = list.filter((s) => s.matchPercent >= 85);
+    else if (filter === "moderate") list = list.filter((s) => s.matchPercent >= 60 && s.matchPercent < 85);
+    else if (filter === "weak") list = list.filter((s) => s.matchPercent < 60);
     else if (filter === "not-submitted") return []; // Handled separately in the UI
 
     if (searchQuery.trim()) {
@@ -410,7 +486,8 @@ const TeacherDashboard = () => {
                 <UserCheck className="h-6 w-6 opacity-40 group-hover:scale-110 transition-transform" />
               </div>
               <p className="text-5xl font-black mb-1">{stats.strong}</p>
-              <p className="text-xs opacity-70 font-semibold uppercase">Similarity Score &gt; 74%</p>
+              <p className="text-xs opacity-70 font-semibold uppercase">Similarity Score ≥ 85%</p>
+              <p className="text-[10px] opacity-50 font-bold uppercase tracking-widest mt-1">Authenticated</p>
               <Check className="absolute -bottom-4 -right-4 h-24 w-24 opacity-10" />
             </CardContent>
           </Card>
@@ -422,7 +499,8 @@ const TeacherDashboard = () => {
                 <Calendar className="h-6 w-6 opacity-40 group-hover:scale-110 transition-transform" />
               </div>
               <p className="text-5xl font-black mb-1">{stats.moderate}</p>
-              <p className="text-xs opacity-70 font-semibold uppercase">Score between 50% - 74%</p>
+              <p className="text-xs opacity-70 font-semibold uppercase">Score between 60% - 84%</p>
+              <p className="text-[10px] opacity-50 font-bold uppercase tracking-widest mt-1">Needs Review</p>
               <Plus className="absolute -bottom-4 -right-4 h-24 w-24 opacity-10 rotate-45" />
             </CardContent>
           </Card>
@@ -434,7 +512,8 @@ const TeacherDashboard = () => {
                 <UserX className="h-6 w-6 opacity-40 group-hover:scale-110 transition-transform" />
               </div>
               <p className="text-5xl font-black mb-1">{stats.weak}</p>
-              <p className="text-xs opacity-70 font-semibold uppercase">Similarity Score &lt; 50%</p>
+              <p className="text-xs opacity-70 font-semibold uppercase">Similarity Score &lt; 60%</p>
+              <p className="text-[10px] opacity-50 font-bold uppercase tracking-widest mt-1">Flagged</p>
               <X className="absolute -bottom-4 -right-4 h-24 w-24 opacity-10" />
             </CardContent>
           </Card>
@@ -580,19 +659,24 @@ const TeacherDashboard = () => {
                                   <span className={`text-sm font-black ${match.color}`}>{sub.matchPercent}%</span>
                                 </td>
                                 <td className="px-4 py-5">
-                                  <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-sm ${match.color.replace("text-", "bg-")}/10 ${match.color}`}>
-                                    {match.label}
-                                  </span>
+                                  <div className="flex flex-col items-start gap-1">
+                                    <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-sm ${match.color.replace("text-", "bg-")}/10 ${match.color}`}>
+                                      {match.label}
+                                    </span>
+                                    <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-tighter ml-1">
+                                      {match.interpretation}
+                                    </span>
+                                  </div>
                                 </td>
                                 <td className="px-4 py-5">
                                   <div className="flex items-center justify-center gap-2">
                                     <Button variant="ghost" size="icon" onClick={() => setViewStudent({ name: sub.studentName, images: sub.uploadedImages })} className="h-8 w-8 rounded-lg bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all">
                                       <Eye className="h-4 w-4" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" onClick={() => handleAcceptReject(sub.studentId, sub.assignmentName, "accepted")} className={`h-8 w-8 rounded-lg transition-all ${sub.status === "accepted" ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200" : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white"}`}>
+                                    <Button variant="ghost" size="icon" onClick={() => handleAcceptReject(sub.id, "accepted")} className={`h-8 w-8 rounded-lg transition-all ${sub.status === "accepted" ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200" : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white"}`}>
                                       <Check className="h-4 w-4" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" onClick={() => handleAcceptReject(sub.studentId, sub.assignmentName, "rejected")} className={`h-8 w-8 rounded-lg transition-all ${sub.status === "rejected" ? "bg-destructive text-white shadow-lg shadow-red-200" : "bg-destructive/10 text-destructive hover:bg-destructive hover:text-white"}`}>
+                                    <Button variant="ghost" size="icon" onClick={() => handleAcceptReject(sub.id, "rejected")} className={`h-8 w-8 rounded-lg transition-all ${sub.status === "rejected" ? "bg-destructive text-white shadow-lg shadow-red-200" : "bg-destructive/10 text-destructive hover:bg-destructive hover:text-white"}`}>
                                       <X className="h-4 w-4" />
                                     </Button>
                                   </div>
@@ -619,6 +703,32 @@ const TeacherDashboard = () => {
         defaultSubject={selectedSubject || ""}
       />
       {viewStudent && <ImageCarouselDialog open={!!viewStudent} onClose={() => setViewStudent(null)} studentName={viewStudent.name} images={viewStudent.images} />}
+      
+      <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 border-0 bg-transparent shadow-none overflow-hidden flex items-center justify-center">
+          {previewImage && (
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }}
+              className="relative w-full h-full flex items-center justify-center p-4"
+            >
+              <img 
+                src={previewImage} 
+                alt="Full Preview" 
+                className="max-w-full max-h-full object-contain rounded-3xl shadow-2xl ring-4 ring-white/20" 
+              />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setPreviewImage(null)}
+                className="absolute top-8 right-8 h-12 w-12 rounded-full bg-black/50 text-white hover:bg-black/70 backdrop-blur-md transition-all border border-white/20 z-50"
+              >
+                <X className="h-6 w-6" />
+              </Button>
+            </motion.div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

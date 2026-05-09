@@ -4,10 +4,12 @@ import sys
 # Ensure app is in Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.database import SessionLocal
+from app.database import SessionLocal, engine
 from app import models, auth, schemas
 
 def create_initial_admin():
+    # Ensure tables exist
+    models.Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
         # Check if admin already exists

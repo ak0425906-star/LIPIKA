@@ -45,3 +45,9 @@ src/integrations/supabase/
 
 # Word temp files
 ~$*.docx
+
+# Local database and agent data
+backend/*.db
+brain/
+.gemini/
+openapi.json

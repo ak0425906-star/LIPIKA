@@ -124,9 +124,11 @@ export async function logout() {
 }
 
 // Assignments
-export async function uploadAssignment(file: File): Promise<unknown> {
+export async function uploadAssignment(file: File, subjectName?: string, taskName?: string): Promise<unknown> {
   const formData = new FormData();
   formData.append("file", file);
+  if (subjectName) formData.append("subject_name", subjectName);
+  if (taskName) formData.append("assignment_id", taskName); // Backend uses assignment_id as task_name
   return apiFetch("/upload-assignment", {
     method: "POST",
     body: formData,
@@ -152,6 +154,23 @@ export async function getTeacherSubjects(): Promise<string[]> {
   return apiFetch("/teacher/my-subjects");
 }
 
+export async function getTeacherTasks(): Promise<any[]> {
+  return apiFetch("/teacher/tasks");
+}
+
+export async function createTeacherTask(data: { name: string; description: string; due_date: string; subject_name: string }): Promise<any> {
+  return apiFetch("/teacher/tasks", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteTeacherTask(taskId: number): Promise<unknown> {
+  return apiFetch(`/teacher/tasks/${taskId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function getStudentSubjects(): Promise<{ id: number; name: string }[]> {
   return apiFetch("/student/my-subjects");
 }
@@ -163,8 +182,14 @@ export async function getStudentAssignments(): Promise<{
   status: string;
   date: string;
   image_url: string;
+  is_reference?: boolean;
+  task_name?: string;
 }[]> {
   return apiFetch("/student/my-assignments");
+}
+
+export async function getStudentTasks(): Promise<any[]> {
+  return apiFetch("/student/my-tasks");
 }
 
 // Admin
@@ -248,3 +273,14 @@ export async function adminUploadTrainingByRoll(rollNumber: string, file: File):
     body: formData,
   });
 }
+
+/**
+ * Updates the status of a student submission (Teacher only)
+ */
+export async function reviewAssignment(assignmentId: number, status: string, feedback: string = ""): Promise<any> {
+  return apiFetch(`/teacher/assignments/${assignmentId}/review`, {
+    method: "PUT",
+    body: JSON.stringify({ status, feedback }),
+  });
+}
+

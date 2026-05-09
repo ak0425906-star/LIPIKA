@@ -4,6 +4,8 @@
 ### Next-Gen AI Handwriting Verification & Academic Integrity Platform
 
 > *The definitive bridge between traditional handwriting and digital authentication.*
+>
+> 📖 **[READ PROJECT GUIDE](./PROJECT_GUIDE.md)** — *Full technical documentation for Exams, Viva, and Presentations.*
 
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.staticfiles.com/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)

@@ -16,7 +16,14 @@ export default defineConfig(({ mode }) => ({
         target: "http://localhost:8000",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ""),
-        secure: true,
+      },
+      "/uploads": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+      "/training_data": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
       },
     },
   },

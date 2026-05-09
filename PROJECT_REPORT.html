@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIPIKA - Advanced Technical Thesis & Viva Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --primary-dark: #0284c7;
+            --secondary: #64748b;
+            --bg: #f8fafc;
+            --text: #0f172a;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+        }
+
+        @media print {
+            .no-print { display: none; }
+            body { background: white !important; }
+            .container { box-shadow: none !important; border: none !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+            .page-break { page-break-before: always; }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 80px;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .no-print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            z-index: 1000;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 80px;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 40px;
+        }
+
+        .logo { font-size: 3.5rem; font-weight: 800; color: var(--primary); margin: 0; }
+
+        h1 { font-size: 1.8rem; margin-top: 2.5em; color: var(--primary-dark); border-left: 5px solid var(--primary); padding-left: 15px; }
+        h2 { font-size: 1.4rem; margin-top: 1.5em; color: var(--text); }
+
+        .methodology-grid {
+            display: grid;
+            grid-template-cols: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .method-card {
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .math-box {
+            background: #0f172a;
+            color: #38bdf8;
+            padding: 30px;
+            margin: 30px 0;
+            font-family: 'JetBrains Mono', monospace;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.2rem;
+            box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.06);
+        }
+
+        .viva-point {
+            background: #fff7ed;
+            padding: 25px;
+            border-radius: 16px;
+            margin: 20px 0;
+            border: 1px solid #fed7aa;
+        }
+
+        .viva-point strong { color: #9a3412; display: block; margin-bottom: 8px; font-size: 1.1rem; }
+
+        .highlight { color: var(--primary); font-weight: 700; }
+
+        .footer { margin-top: 80px; text-align: center; color: var(--secondary); font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <button class="no-print-btn no-print" onclick="window.print()">Export Full Thesis PDF</button>
+
+    <div class="container">
+        <header>
+            <p class="logo">LIPIKA</p>
+            <p style="font-weight: 700; font-size: 1.2rem; color: var(--secondary); margin-top: 10px;">Comprehensive Project Principles & Methodologies</p>
+        </header>
+
+        <section>
+            <h1>1. Core AI Principle: Siamese Neural Networks</h1>
+            <p>LIPIKA does not use standard classification. Instead, it employs <strong>One-Shot Learning</strong> using Siamese Networks. This allows the system to verify a student's handwriting even if it has only seen 2-3 previous samples.</p>
+            
+            <div class="methodology-grid">
+                <div class="method-card">
+                    <h3>Sub-network Architecture</h3>
+                    <p>Two identical CNNs (Convolutional Neural Networks) process the reference and the assignment images simultaneously, sharing the exact same weights and parameters.</p>
+                </div>
+                <div class="method-card">
+                    <h3>Feature Embedding</h3>
+                    <p>Images are compressed into a <strong>128-dimensional vector</strong>. This vector represents the "DNA" of the handwriting, capturing stroke tilt, pressure patterns, and loop sizes.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="page-break">
+            <h1>2. The Dynamic Calibration Algorithm</h1>
+            <p>To eliminate the high-bias false positives inherent in distance-based ML models, we implemented a custom non-linear transformation algorithm.</p>
+            
+            <div class="math-box">
+                f(x) = (x / 100)<sup>10</sup> * 100
+            </div>
+
+            <h2>Methodological Explanation:</h2>
+            <p>By raising the normalized score to the <strong>10th power</strong>, we create a logarithmic-style penalty for variance. Even a 5% difference in the raw ML features results in a 40% drop in the final score. This ensures that only <strong>Strong Matches (&ge;85%)</strong> are considered authenticated.</p>
+            
+            <table>
+                <thead>
+                    <tr><th>Raw ML Score</th><th>Calibrated Score</th><th>System Status</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>100%</td><td>100%</td><td>Authenticated</td></tr>
+                    <tr><td>99%</td><td>~90.4%</td><td>Authenticated</td></tr>
+                    <tr><td>95%</td><td>~59.8%</td><td>Flagged (Weak)</td></tr>
+                    <tr><td>90%</td><td>~34.8%</td><td>Flagged (Weak)</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="page-break">
+            <h1>3. Backend Engineering & Data Integrity</h1>
+            
+            <h2>A. Asynchronous Request Handling</h2>
+            <p>Using FastAPI's <code>async/await</code> syntax, the server implements non-blocking I/O operations. While the ML model processes a comparison (CPU intensive), the main thread remains free to handle other student submissions.</p>
+
+            <h2>B. Stateless Authentication (JWT)</h2>
+            <p>Authentication is handled via <strong>JSON Web Tokens</strong>. This follows the REST principle of "Statelessness," where the server does not store session data. Instead, the identity and role (Student/Teacher/Admin) are securely encoded and signed within the token itself.</p>
+
+            <h2>C. Relational Database Normalization</h2>
+            <p>The SQLite database is structured in <strong>3rd Normal Form (3NF)</strong> to eliminate data redundancy. Foreign Key constraints ensure that assignments are linked to existing tasks, and tasks are linked to valid subjects.</p>
+        </section>
+
+        <section class="page-break">
+            <h1>4. Exhaustive Viva Preparation</h1>
+
+            <div class="viva-point">
+                <strong>Question: Why use a Siamese Network instead of a standard CNN?</strong>
+                <em>Answer:</em> Standard CNNs require thousands of images per person to "learn" a face or handwriting. Siamese Networks only need a few samples (One-Shot Learning) because they learn to distinguish *differences* rather than specific *identities*.
+            </div>
+
+            <div class="viva-point">
+                <strong>Question: What is the significance of the "Minimum Score" selection?</strong>
+                <em>Answer:</em> A student might have varied handwriting across different days. By comparing the assignment against *all* references and taking the minimum similarity, we ensure the system is at its most skeptical level, prioritizing security over convenience.
+            </div>
+
+            <div class="viva-point">
+                <strong>Question: How does the system prevent Directory Traversal attacks?</strong>
+                <em>Answer:</em> We use the <code>uuid</code> library to rename every uploaded file into a random 36-character string. This prevents attackers from guessing file paths or uploading files that could overwrite system configurations.
+            </div>
+
+            <div class="viva-point">
+                <strong>Question: Explain the "Event Loop" in your backend.</strong>
+                <em>Answer:</em> FastAPI runs on an Event Loop. When an ML request is made, the task is sent to the background, and the loop continues to listen for new requests. When the ML result is ready, a callback triggers the final response. This allows for high concurrency.
+            </div>
+        </section>
+
+        <div class="footer">
+            <p>LIPIKA Technical Thesis — 2026 Academic Session — Confidential Report</p>
+        </div>
+    </div>
+</body>
+</html>

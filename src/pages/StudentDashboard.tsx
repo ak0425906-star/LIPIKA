@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
-import { getCurrentUser, isAuthenticated, logout, uploadAssignment, getStudentSubjects, getStudentAssignments } from "@/lib/api";
+import { getCurrentUser, isAuthenticated, logout, uploadAssignment, getStudentSubjects, getStudentAssignments, getStudentTasks } from "@/lib/api";
 
 interface Assignment {
   name: string;
@@ -40,6 +40,7 @@ const StudentDashboard = () => {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [expandedAssignment, setExpandedAssignment] = useState<string | null>(null);
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewImages, setPreviewImages] = useState<{ images: string[]; index: number } | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -51,6 +52,82 @@ const StudentDashboard = () => {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+  const loadData = async () => {
+    try {
+      const [apiSubjects, apiAssignments, rawTasks] = await Promise.all([
+        getStudentSubjects(),
+        getStudentAssignments(),
+        getStudentTasks()
+      ]);
+
+      const apiTasks = Array.isArray(rawTasks) ? rawTasks : [];
+
+      // Transform and group assignments by subject
+      const formattedSubjects: Subject[] = apiSubjects.map(subj => {
+        // 1. Get all tasks for this subject
+        const subjectTasks = apiTasks.filter(t => t.subject_name === subj.name);
+        
+        // 2. Get all submissions for this subject (excluding references)
+        const subjectSubmissions = apiAssignments.filter(a => a.subject_name === subj.name && !a.is_reference);
+
+        // 3. Combine them: For each task, check if there's a submission
+        const assignments: Assignment[] = subjectTasks.map(task => {
+          const submission = subjectSubmissions.find(s => s.task_name === task.name);
+          
+          if (submission) {
+            return {
+              name: task.name,
+              description: task.description || "Uploaded handwriting assignment",
+              dueDate: task.due_date,
+              status: "Completed",
+              verificationStatus: submission.status.toLowerCase() as "pending" | "accepted" | "rejected",
+              teacher: "Assigned Teacher",
+              matchPercent: submission.similarity,
+              uploadedImages: [submission.image_url]
+            };
+          } else {
+            return {
+              name: task.name,
+              description: task.description || "No submission yet",
+              dueDate: task.due_date,
+              status: "Pending",
+              teacher: "Assigned Teacher"
+            };
+          }
+        });
+
+        // 3. Find Uncategorized (those with no task name OR task name not in this subject)
+        subjectSubmissions.forEach(sub => {
+          const isLinkedToKnownTask = subjectTasks.some(t => t.name === sub.task_name);
+          if (!sub.task_name || !isLinkedToKnownTask) {
+            // Avoid duplicates
+            if (!assignments.find(a => a.name === (sub.task_name || "Uncategorized Submission"))) {
+              assignments.push({
+                name: sub.task_name || "Uncategorized Submission",
+                description: "Submission without specific task link",
+                dueDate: sub.date.split(" ")[0],
+                status: "Completed",
+                verificationStatus: sub.status.toLowerCase() as "pending" | "accepted" | "rejected",
+                teacher: "Assigned Teacher",
+                matchPercent: sub.similarity,
+                uploadedImages: [sub.image_url]
+              });
+            }
+          }
+        });
+
+        return {
+          name: subj.name,
+          assignments: assignments
+        };
+      });
+
+      setSubjects(formattedSubjects);
+    } catch (err) {
+      console.error("Failed to load student data", err);
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated()) { navigate("/"); return; }
     const user = getCurrentUser();
@@ -58,40 +135,6 @@ const StudentDashboard = () => {
     
     setFullName(user.name || "Student");
     setDepartment(user.department || "");
-
-    const loadData = async () => {
-      try {
-        const [apiSubjects, apiAssignments] = await Promise.all([
-          getStudentSubjects(),
-          getStudentAssignments()
-        ]);
-
-        // Transform and group assignments by subject
-        const formattedSubjects: Subject[] = apiSubjects.map(subj => {
-          const assignments = apiAssignments
-            .filter(a => a.subject_name === subj.name)
-            .map(a => ({
-              name: a.subject_name || "Assignment",
-              description: "Uploaded handwriting assignment", // Generic as backend doesn't store descriptions yet
-              dueDate: a.date.split(" ")[0],
-              status: (a.status.toLowerCase() === "pending" ? "Pending" : "Completed") as "Pending" | "Completed",
-              verificationStatus: a.status.toLowerCase() as "pending" | "accepted" | "rejected",
-              teacher: "Assigned Teacher",
-              matchPercent: a.similarity,
-              uploadedImages: [a.image_url]
-            }));
-
-          return {
-            name: subj.name,
-            assignments: assignments
-          };
-        });
-
-        setSubjects(formattedSubjects);
-      } catch (err) {
-        console.error("Failed to load student data", err);
-      }
-    };
 
     loadData();
   }, [navigate]);
@@ -135,22 +178,9 @@ const StudentDashboard = () => {
     setUploadingFor(assignmentName);
     try {
       for (const file of uploadFiles) {
-        await uploadAssignment(file);
+        await uploadAssignment(file, subjectName, assignmentName);
       }
-      setSubjects((prev) =>
-        prev.map((s) =>
-          s.name === subjectName
-            ? {
-                ...s,
-                assignments: s.assignments.map((a) =>
-                  a.name === assignmentName
-                    ? { ...a, status: "Completed" as const, uploadedImages: uploadPreviews, verificationStatus: "pending" as const }
-                    : a
-                ),
-              }
-            : s
-        )
-      );
+      await loadData();
     } catch (err) {
       console.error("Upload error:", err);
     } finally {
@@ -400,8 +430,12 @@ const StudentDashboard = () => {
                                         {uploadPreviews.length > 0 && (
                                           <div className="grid grid-cols-3 gap-4">
                                             {uploadPreviews.map((src, idx) => (
-                                              <div key={idx} className="relative aspect-square group/preview">
-                                                <img src={src} alt={`Preview ${idx + 1}`} className="h-full w-full rounded-xl object-cover shadow-md ring-2 ring-transparent transition-all group-hover/preview:ring-primary" />
+                                              <div 
+                                                key={idx} 
+                                                className="relative group h-32 rounded-2xl overflow-hidden border-2 border-slate-100/50 shadow-sm cursor-pointer"
+                                                onClick={() => setPreviewImage(src)}
+                                              >
+                                                <img src={src} alt={`Submission ${idx + 1}`} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                                                 <button type="button" onClick={(e) => { e.stopPropagation(); removePreview(idx); }} className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-xl hover:scale-125 transition-transform active:scale-95">
                                                   <X className="h-4 w-4" />
                                                 </button>
@@ -527,35 +561,85 @@ const StudentDashboard = () => {
 
       {/* Image Carousel Dialog */}
       <Dialog open={!!previewImages} onOpenChange={() => setPreviewImages(null)}>
-        <DialogContent className="max-w-3xl p-4 bg-background border-border">
-          {previewImages && previewImages.images.length > 0 && (
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative w-full flex items-center justify-center min-h-[40vh]">
-                {previewImages.images.length > 1 && (
-                  <Button variant="ghost" size="icon" onClick={() => setPreviewImages((prev) => prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null)} disabled={previewImages.index === 0} className="absolute left-0 z-10">
-                    <ChevronLeft className="h-6 w-6" />
-                  </Button>
+        <DialogContent className="max-w-5xl bg-slate-900/95 backdrop-blur-xl border-white/10 p-0 overflow-hidden rounded-[2rem] shadow-2xl">
+          <div className="relative w-full h-[85vh] flex flex-col">
+            <div className="p-6 flex items-center justify-between border-b border-white/5">
+              <DialogTitle className="text-xl font-black text-white uppercase tracking-tight">Handwriting Record Archive</DialogTitle>
+              <div className="flex items-center gap-4">
+                {previewImages && previewImages.images.length > 1 && (
+                  <span className="px-3 py-1 bg-white/10 rounded-lg text-[10px] font-black text-white/50 uppercase tracking-widest">
+                    {previewImages.index + 1} / {previewImages.images.length}
+                  </span>
                 )}
-                <img src={previewImages.images[previewImages.index]} alt={`Image ${previewImages.index + 1}`} className="max-h-[65vh] w-auto rounded-lg object-contain" />
-                {previewImages.images.length > 1 && (
-                  <Button variant="ghost" size="icon" onClick={() => setPreviewImages((prev) => prev ? { ...prev, index: Math.min(prev.images.length - 1, prev.index + 1) } : null)} disabled={previewImages.index === previewImages.images.length - 1} className="absolute right-0 z-10">
-                    <ChevronRight className="h-6 w-6" />
-                  </Button>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">Image {previewImages.index + 1} of {previewImages.images.length}</p>
-              <div className="flex gap-2 overflow-x-auto max-w-full pb-2">
-                {previewImages.images.map((src, i) => (
-                  <img
-                    key={i}
-                    src={src}
-                    alt={`Thumb ${i + 1}`}
-                    className={`h-14 w-14 rounded-lg object-cover cursor-pointer border-2 transition-all ${i === previewImages.index ? "border-primary" : "border-transparent opacity-60 hover:opacity-100"}`}
-                    onClick={() => setPreviewImages((prev) => prev ? { ...prev, index: i } : null)}
-                  />
-                ))}
+                <Button variant="ghost" size="icon" onClick={() => setPreviewImages(null)} className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 text-white">
+                  <X className="h-5 w-5" />
+                </Button>
               </div>
             </div>
+            
+            <div className="flex-1 relative group">
+              <div className="absolute inset-0 overflow-y-auto p-4 flex flex-col items-center">
+                {previewImages && (
+                  <motion.img 
+                    key={previewImages.index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    src={previewImages.images[previewImages.index]} 
+                    alt={`Record ${previewImages.index + 1}`} 
+                    className="w-full h-auto max-w-4xl shadow-2xl ring-1 ring-white/10" 
+                  />
+                )}
+              </div>
+
+              {previewImages && previewImages.images.length > 1 && (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setPreviewImages((prev) => prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null)}
+                    disabled={previewImages.index === 0} 
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-20 h-14 w-14 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/10 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                  >
+                    <ChevronLeft className="h-8 w-8" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setPreviewImages((prev) => prev ? { ...prev, index: Math.min(prev.images.length - 1, prev.index + 1) } : null)}
+                    disabled={previewImages.index === previewImages.images.length - 1} 
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-20 h-14 w-14 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/10 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                  >
+                    <ChevronRight className="h-8 w-8" />
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 border-0 bg-transparent shadow-none overflow-hidden flex items-center justify-center">
+          {previewImage && (
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }}
+              className="relative w-full h-full flex items-center justify-center p-4"
+            >
+              <img 
+                src={previewImage} 
+                alt="Full Preview" 
+                className="max-w-full max-h-full object-contain rounded-3xl shadow-2xl ring-4 ring-white/20" 
+              />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setPreviewImage(null)}
+                className="absolute top-8 right-8 h-12 w-12 rounded-full bg-black/50 text-white hover:bg-black/70 backdrop-blur-md transition-all border border-white/20 z-50"
+              >
+                <X className="h-6 w-6" />
+              </Button>
+            </motion.div>
           )}
         </DialogContent>
       </Dialog>

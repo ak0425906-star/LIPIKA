@@ -46,8 +46,9 @@ class Assignment(Base):
     is_reference = Column(Integer, default=0)
     is_training = Column(Boolean, default=False)
     
-    # New: link assignment to a specific subject
+    # Link assignment to a specific subject and task
     subject_name = Column(String, nullable=True)
+    task_name = Column(String, nullable=True)
 
     # Assignment metadata
     status = Column(String, default="pending")
@@ -57,3 +58,14 @@ class Assignment(Base):
 
     # Relationship to the User model
     student = relationship("User", back_populates="assignments")
+
+
+class Task(Base):
+    __tablename__ = "tasks"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    description = Column(Text, nullable=True)
+    due_date = Column(String)
+    subject_name = Column(String)
+    teacher_username = Column(String, ForeignKey("users.username"))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

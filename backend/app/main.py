@@ -115,7 +115,8 @@ def login(user_data: schemas.UserLogin, db: Session = Depends(get_db)):
 # UTILITIES
 # -----------------------------
 def get_match_type(score: float):
-    if score >= 85: # Tightened thresholds for better accuracy
+    # Thresholds: ≥ 85% Strong, 60-84% Moderate, < 60% Weak
+    if score >= 85: 
         return "Strong Match"
     elif score >= 60:
         return "Moderate Match"
@@ -126,7 +127,7 @@ def save_upload_file(upload_file: UploadFile, destination_folder: str) -> str:
     if not os.path.exists(destination_folder):
         os.makedirs(destination_folder)
     unique_filename = f"{uuid.uuid4()}_{upload_file.filename}"
-    file_path = os.path.join(destination_folder, unique_filename)
+    file_path = os.path.join(destination_folder, unique_filename).replace("\\", "/")
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(upload_file.file, buffer)
     return file_path
@@ -157,7 +158,9 @@ async def upload_assignment(
             image_path=file_path,
             is_reference=1,
             is_training=True,
-            similarity_score=100.0
+            similarity_score=100.0,
+            subject_name=subject_name,
+            task_name=assignment_id
         )
         db.add(new_assignment)
         db.commit()
@@ -167,15 +170,43 @@ async def upload_assignment(
             "match_type": "Reference"
         }
 
-    # Compare against reference using Hugging Face
+    # Compare against ALL available references for higher accuracy
     try:
+        references = db.query(models.Assignment).filter(
+            models.Assignment.student_username == current_user.username,
+            models.Assignment.is_reference == 1
+        ).all()
+        
+        if not references:
+            raise Exception("No reference found after initial check")
+
         client = Client("thanoxz/ml-api")
-        result = client.predict(
-            handle_file(reference.image_path),
-            handle_file(file_path),
-            api_name="/compare_handwriting"
-        )
-        similarity = float(result) if not isinstance(result, list) else float(result[0])
+        scores = []
+        
+        for ref in references:
+            result = client.predict(
+                handle_file(ref.image_path),
+                handle_file(file_path),
+                api_name="/compare_handwriting"
+            )
+            val = float(result) if not isinstance(result, list) else float(result[0])
+            scores.append(val)
+        
+        # We take the MINIMUM similarity score to be as strict as possible
+        # If any reference doesn't match well, the whole submission is flagged
+        base_similarity = min(scores)
+        
+        # CALIBRATION LOGIC:
+        # The underlying ML model has a high bias (returns ~95% even for different handwritings).
+        # We apply a steep power transformation to 'stretch' the 95-100 range into 0-100.
+        # Formula: (score/100)^10 * 100
+        # 100.0 -> 100.0
+        # 99.0  -> 90.4  (Strong)
+        # 98.0  -> 81.7  (Moderate)
+        # 95.0  -> 59.8  (Weak)
+        # 90.0  -> 34.8  (Weak)
+        similarity = round(pow(base_similarity / 100.0, 10) * 100.0, 2)
+        
     except Exception as e:
         print(f"ML API Error: {e}")
         similarity = 0.0
@@ -186,7 +217,8 @@ async def upload_assignment(
         is_reference=0,
         is_training=False,
         similarity_score=similarity,
-        subject_name=subject_name
+        subject_name=subject_name,
+        task_name=assignment_id
     )
 
     db.add(new_assignment)
@@ -242,7 +274,51 @@ def get_teacher_subjects(
     db: Session = Depends(get_db),
     current_user = Depends(require_role("teacher"))
 ):
-    return [s.name for s in current_user.subjects]
+    subjects = db.query(models.Subject).join(
+        models.TeacherSubject, models.Subject.id == models.TeacherSubject.subject_id
+    ).filter(models.TeacherSubject.teacher_username == current_user.username).all()
+    return [s.name for s in subjects]
+
+@app.post("/teacher/tasks", response_model=schemas.TaskOut)
+def create_task(
+    task: schemas.TaskCreate,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("teacher"))
+):
+    db_task = models.Task(
+        name=task.name,
+        description=task.description,
+        due_date=task.due_date,
+        subject_name=task.subject_name,
+        teacher_username=current_user.username
+    )
+    db.add(db_task)
+    db.commit()
+    db.refresh(db_task)
+    return db_task
+
+@app.get("/teacher/tasks", response_model=List[schemas.TaskOut])
+def get_teacher_tasks(
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("teacher"))
+):
+    return db.query(models.Task).filter(models.Task.teacher_username == current_user.username).all()
+
+@app.delete("/teacher/tasks/{task_id}")
+def delete_teacher_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("teacher"))
+):
+    task = db.query(models.Task).filter(
+        models.Task.id == task_id,
+        models.Task.teacher_username == current_user.username
+    ).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found or unauthorized")
+    db.delete(task)
+    db.commit()
+    return {"message": "Task deleted successfully"}
 
 @app.get("/teacher/assignments")
 def get_assignments(
@@ -267,6 +343,7 @@ def get_assignments(
             "student_name": student.name,
             "roll_number": student.roll_number,
             "subject_name": assignment.subject_name,
+            "task_name": assignment.task_name,
             "similarity": round(assignment.similarity_score, 2),
             "match_type": get_match_type(assignment.similarity_score),
             "date": assignment.created_at.strftime("%Y-%m-%d %H:%M") if assignment.created_at else "N/A",
@@ -309,9 +386,35 @@ def get_student_assignments(
             "similarity": round(a.similarity_score, 2),
             "status": a.status,
             "date": a.created_at.strftime("%Y-%m-%d %H:%M") if a.created_at else "N/A",
-            "image_url": f"/{a.image_path}"
+            "image_url": f"/{a.image_path}",
+            "task_name": a.task_name
         }
         for a in assignments
+    ]
+
+@app.get("/student/my-tasks")
+def get_student_tasks(
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("student"))
+):
+    # Get subjects in student's department
+    subjects = db.query(models.Subject).filter(models.Subject.department == current_user.department).all()
+    if not subjects:
+        subjects = db.query(models.Subject).all()
+        
+    subject_names = [s.name for s in subjects]
+    
+    # Get tasks for those subjects
+    tasks = db.query(models.Task).filter(models.Task.subject_name.in_(subject_names)).all()
+    return [
+        {
+            "id": t.id,
+            "name": t.name,
+            "description": t.description,
+            "due_date": t.due_date if t.due_date else "N/A",
+            "subject_name": t.subject_name
+        }
+        for t in tasks
     ]
 
 # -----------------------------
