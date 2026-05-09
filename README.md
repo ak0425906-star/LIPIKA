@@ -1,171 +1,132 @@
 <div align="center">
 
-# ✍️ LIPIKA
-### Next-Gen AI Handwriting Verification & Academic Integrity Platform
+# ✍️ LIPIKA: AI-Driven Academic Integrity Platform
+### Advanced Handwriting Verification & Authentication Ecosystem
 
-> *The definitive bridge between traditional handwriting and digital authentication.*
->
-> 📖 **[READ PROJECT GUIDE](./PROJECT_GUIDE.md)** — *Full technical documentation for Exams, Viva, and Presentations.*
-
-[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.staticfiles.com/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![React 18](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech)
-[![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
+[![HuggingFace](https://img.shields.io/badge/AI-Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co)
+
+**LIPIKA** is an enterprise-grade educational solution engineered to safeguard academic integrity through **Deep Learning Handwriting Analysis**. By bridging the gap between traditional handwritten assessments and modern digital authentication, LIPIKA provides institutions with a robust, automated framework for verifying student authorship in real-time.
+
+[**Explore Technical Deep-Dive**](./PROJECT_GUIDE.md) | [**View Implementation Report**](./PROJECT_REPORT.html)
 
 </div>
 
 ---
 
-## 🌟 Overview
+## 📋 Executive Abstract
 
-**LIPIKA** is a sophisticated, full-stack educational ecosystem engineered to uphold academic integrity through **Deep Learning Handwriting Analysis**. By leveraging state-of-the-art computer vision models, LIPIKA validates the authenticity of student submissions in real-time, providing educators with a robust tool to verify that every assignment is truly the student's own work.
+In the contemporary academic landscape, maintaining the authenticity of handwritten submissions is a critical challenge. **LIPIKA** (Sanskrit for "Writing" or "Script") addresses this by implementing a **Siamese Neural Network (SNN)** architecture that serves as a biometric signature for student handwriting. 
 
-### 🎯 The Mission
-In an era of increasing digital shortcuts, LIPIKA preserves the value of handwritten academic work by providing a secure, automated, and highly accurate verification layer.
-
----
-
-## ✨ Premium Features
-
-### 🎨 Modern UI/UX Experience
-- **Glassmorphic Design**: A sleek, modern interface utilizing high-end aesthetics, smooth transitions, and a curated color palette.
-- **Dynamic Dashboards**: Responsive, interactive portals for Students, Teachers, and Admins.
-- **Micro-interactions**: Powered by Framer Motion for a premium, "app-like" feel.
-
-### 🧠 Advanced AI Core
-- **Siamese Neural Networks**: Utilizes advanced comparison logic to generate precise similarity scores.
-- **Multi-Reference Baseline**: Collects multiple handwriting samples during onboarding for a more accurate "biometric" profile.
-- **Real-time Processing**: Fast inference via dedicated Hugging Face ML endpoints.
-
-### 🛡️ Enterprise-Grade Security
-- **JWT Authentication**: Secure, stateless session management.
-- **Bcrypt Hashing**: Industry-standard protection for user credentials.
-- **Role-Based Access (RBAC)**: Strict permission boundaries between academic roles.
+The system automates the verification process, allowing educators to focus on pedagogy while the AI engine handles the rigorous task of validating authorship against established baselines.
 
 ---
 
-## 🆕 What's New (Latest Updates)
+## 💎 Core Value Propositions
 
-- **🚫 Zero-Demo Mode**: Completely removed all hardcoded demo data. The system now runs exclusively on real, user-created data.
-- **🔄 Full API Synchronization**: Dashboards are now 100% reactive to backend database changes.
-- **📊 Enhanced Analytics**: Teachers now get real-time stats on submission quality and match distributions.
-- **📁 Smart Reference Management**: Admins can now manage, update, and audit student handwriting references individually.
+### 🛡️ Uncompromising Integrity
+*   **Biometric Handwriting Analysis**: Utilizes unique stroke patterns, pressure points, and ligatures to create a distinctive digital footprint for every student.
+*   **Anti-Forgery Layer**: Implements a proprietary **Power-of-10 Calibration Algorithm** to eliminate false positives and ensure high-precision matching.
+
+### ⚡ Enterprise Architecture
+*   **Decoupled Microservices**: High-performance React frontend communicating with a scalable FastAPI backend.
+*   **Asynchronous Processing**: Non-blocking I/O operations ensure the system remains responsive even during intensive ML inference.
+*   **Role-Based Access Control (RBAC)**: Fine-grained permission management for Administrators, Faculty, and Students.
+
+### 🎨 Sophisticated User Experience
+*   **Premium Design System**: A glassmorphic, responsive interface built for clarity and efficiency.
+*   **Real-Time Analytics**: Dynamic data visualization for teachers to monitor class-wide integrity trends at a glance.
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ Technical Ecosystem
 
+### High-Level Architecture
 ```mermaid
-graph TD
-    A[React Frontend] <-->|REST API| B[FastAPI Backend]
-    B <-->|SQL| C[PostgreSQL - Neon.tech]
-    B <-->|Gradio Client| D[ML Model - Hugging Face]
+graph LR
+    User((User)) -->|HTTPS| Frontend[React SPA]
+    Frontend -->|JWT Authenticated API| Backend[FastAPI Logic Engine]
+    Backend -->|SQL Queries| DB[(PostgreSQL Cloud)]
+    Backend -->|Inference Requests| AI[SNN ML Model - Hugging Face]
     
-    subgraph "Frontend Layer"
-    A
-    end
-    
-    subgraph "Core Logic"
-    B
-    end
-    
-    subgraph "Data & Intelligence"
-    C
-    D
-    end
+    style Frontend fill:#e1f5fe,stroke:#01579b
+    style Backend fill:#e8f5e9,stroke:#2e7d32
+    style AI fill:#fff3e0,stroke:#ef6c00
 ```
 
----
-
-## 📂 Project Intelligence
-
-```bash
-LIPIKA/
-├── src/                    # Frontend Architecture (React + TS)
-│   ├── pages/              # Logic-heavy dashboard views
-│   ├── lib/                # API client & core utilities
-│   └── components/         # Premium UI component library
-├── backend/                # Backend Architecture (FastAPI)
-│   ├── app/                # Core API logic & models
-│   │   ├── auth.py         # Security & JWT logic
-│   │   ├── main.py         # Endpoint routing
-│   │   └── models.py       # Database schema definitions
-└── training_data/          # Local storage for ML reference samples
-```
+### Stack Specifications
+| Layer | Technology | Rationale |
+| :--- | :--- | :--- |
+| **Frontend** | React 18, Vite, Tailwind CSS | Modular component architecture with industry-leading build speeds. |
+| **Backend** | FastAPI, Python 3.10+, SQLAlchemy | High-performance, type-safe API development with asynchronous support. |
+| **Database** | PostgreSQL (Neon/Cloud) | Relational integrity with robust JSONB support for complex metadata. |
+| **AI/ML** | Siamese Neural Networks, PyTorch | Specialized for similarity-based verification rather than simple classification. |
+| **Security** | JWT, Bcrypt, UUID | Stateless authentication with enterprise-standard encryption. |
 
 ---
 
-## 👥 Specialized User Portals
+## 🚀 Deployment & Orchestration
 
-### 🎓 Student Dashboard
-* **Dynamic Submissions**: Securely upload handwriting samples for immediate AI verification.
-* **Integrity Tracking**: Monitor similarity scores and verification history over time.
-* **Subject Focus**: View and manage assignments organized by specific academic subjects.
+### Prerequisites
+*   **Runtime**: Node.js v18+, Python 3.10+
+*   **Storage**: PostgreSQL instance (Local or Cloud)
+*   **Environment**: Valid `.env` configuration in `/backend`
 
-### 🧑‍🏫 Faculty Portal
-* **Review Command Center**: Comprehensive view of all student submissions with automated AI tagging.
-* **Actionable Insights**: One-click Accept/Reject functionality with match confidence levels.
-* **Data Visualization**: Real-time distribution of Strong, Moderate, and Weak matches across the class.
-
-### 🛡️ System Administration
-* **Enrollment Management**: Full control over student and teacher profiles.
-* **Baseline Auditing**: Directly manage and update the handwriting reference data used by the AI model.
-* **Global Configuration**: Manage subjects, departments, and system-wide settings.
-
----
-
-## 🌐 Infrastructure & Deployment
-
-| Component | Technology | Hosting |
-|-----------|------------|---------|
-| **Frontend** | React + Vite | Vercel / Static |
-| **Backend** | FastAPI | [Render](https://render.com) |
-| **Intelligence** | Hugging Face | [Spaces](https://huggingface.co/spaces) |
-| **Persistence** | PostgreSQL | [Neon.tech](https://neon.tech) |
-
----
-
-## 🚀 Deployment & Local Setup
-
-### Requirements
-- **Node.js** (v18+)
-- **Python** (v3.9+)
-- **PostgreSQL** (Managed or Local)
-
-### Quick Start
-1. **Clone & Install**:
-   ```bash
-   git clone https://github.com/ak0425906-star/LIPIKA.git
-   npm install
-   ```
-2. **Backend Config**:
-   Initialize a virtual environment in `/backend`, install `requirements.txt`, and configure your `.env` with `DATABASE_URL` and `JWT_SECRET_KEY`.
-3. **Launch**:
-   - Frontend: `npm run dev`
-   - Backend: `uvicorn app.main:app --reload`
+### Installation Sequence
+1.  **Repository Initialization**
+    ```bash
+    git clone https://github.com/ak0425906-star/LIPIKA.git
+    cd LIPIKA
+    ```
+2.  **Frontend Setup**
+    ```bash
+    npm install
+    npm run dev
+    ```
+3.  **Backend Initialization**
+    ```bash
+    cd backend
+    python -m venv venv
+    source venv/bin/activate  # Or venv\Scripts\activate on Windows
+    pip install -r requirements.txt
+    uvicorn app.main:app --reload
+    ```
 
 ---
 
-## 🧪 Verification Logic
+## 🧪 Intelligence Matrix
+The system categorizes authenticity based on calculated similarity thresholds, refined through our dynamic calibration engine:
 
-| Threshold | Status | Interpretation |
-|:---:|:---:|---|
-| **≥ 85%** | 🟢 **Strong** | Authenticated. High confidence of match. |
-| **60-84%** | 🟡 **Moderate** | Needs Review. Possible inconsistencies detected. |
-| **< 60%** | 🔴 **Weak** | Flagged. Handwriting profile does not match. |
+| Confidence Level | Threshold | Actionable Status | Institutional Interpretation |
+| :--- | :---: | :---: | :--- |
+| 🟢 **Exemplary** | **≥ 85%** | **Authenticated** | High confidence match; matches student's baseline profile. |
+| 🟡 **Marginal** | **60-84%** | **Review Flag** | Minor inconsistencies detected; requires manual faculty audit. |
+| 🔴 **Critical** | **< 60%** | **Unverified** | Significant deviation; flagged as high-risk for academic dishonesty. |
+
+---
+
+## 👥 Strategic User Portals
+
+### 🎓 Student Onboarding & Tracking
+Secure portal for students to submit assignments and track their personal integrity metrics. Features seamless file uploads and real-time status updates.
+
+### 🧑‍🏫 Faculty Review Command Center
+A data-rich dashboard for teachers to manage submissions. Includes one-click verification, similarity heatmaps, and automated classification based on AI confidence.
+
+### 🛡️ Institutional Administration
+Global control over academic departments, subjects, and user enrollment. Provides the capability to manage the "Gold Standard" handwriting references used for verification.
 
 ---
 
-## 📝 License & Attribution
+## 📝 Governance & Attribution
+**LIPIKA** is developed and maintained by **[ak0425906-star](https://github.com/ak0425906-star)**. 
 
-Built with passion for the academic community.  
-**Lead Developer**: [ak0425906-star](https://github.com/ak0425906-star)
-
----
+Designed for scalability, security, and the future of academic excellence.
 
 <div align="center">
-<b>LIPIKA — Verify. Authenticate. Trust.</b><br>
-Built with ❤️ for a more transparent academic future.
+<b>Verify. Authenticate. Trust.</b><br>
+<i>LIPIKA — Empowering Educational Integrity through Innovation.</i>
 </div>
